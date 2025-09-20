@@ -1,10 +1,12 @@
-import express from "express"
+import express from "express";
+import { verifyToken, authorizeRoles } from "../middleware/authMiddleware.js";
 import { adminController, managerController, userController } from "../controllers/userController.js";
-import { verifyToken } from "../middleware/authMiddleware.js";
-const router =  express.Router();
 
-router.post("/admin", verifyToken, adminController)
-router.post("/manager", verifyToken, managerController)
-router.post("/user", verifyToken, userController)
 
-export default router
+const router = express.Router();
+
+router.get("/admin", verifyToken, authorizeRoles("admin"), adminController);
+router.get("/manager", verifyToken, authorizeRoles("manager"), managerController);
+router.get("/user", verifyToken, authorizeRoles("user", "manager", "admin"), userController);
+
+export default router;

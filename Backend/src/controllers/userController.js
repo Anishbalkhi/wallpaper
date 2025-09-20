@@ -1,24 +1,13 @@
-// import User from "../models/User.model.js";
+// authController.js
 
+export const adminController = (req, res) => {
+  res.status(200).json({ msg: "admin" });
+};
 
+export const userController = (req, res) => {
+  res.status(200).json({ msg: "user" });
+};
 
-export const adminController = async (req, res)=>{
-res.status(200).json({
-    msg: "admin"
-})
-}
-
-
-export const userController = async (req, res)=>{
-res.status(200).json({
-    msg: "user"
-})
-}
-
-export const managerController = async (req, res)=>{
-res.status(200).json({
-    msg: "manager"
-})
-
-}
-
+export const managerController = (req, res) => {
+  res.status(200).json({ msg: "manager" });
+};

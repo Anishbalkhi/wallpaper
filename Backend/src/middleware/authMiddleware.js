@@ -17,6 +17,8 @@ export const verifyToken = async (req, res , next)=>{
         }
             
          const decode = jwt.verify(token, process.env.JWT_SECRET ) 
+             req.user = decode;
+             next();
         } catch (error) {
            res.status(401)
            .json({
@@ -26,3 +28,12 @@ export const verifyToken = async (req, res , next)=>{
 
         
 }
+
+export const authorizeRoles = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ msg: "Access denied: Insufficient permissions" });
+    }
+    next();
+  };
+};
