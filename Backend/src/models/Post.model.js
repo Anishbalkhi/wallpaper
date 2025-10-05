@@ -2,28 +2,25 @@ import mongoose from "mongoose";
 
 const postSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-      minlength: 6,
-      maxlength: 100,
-    },
+    title: { type: String, required: true, minlength: 2, maxlength: 150 },
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    image: { type: String }, 
-    price: { type: Number, default: 0 }, 
-    category: { type: String }, 
+    image: { type: String, required: true },
+    publicId: { type: String },
+    price: { type: Number, default: 0 },
+    category: { type: String },
     likes: { type: Number, default: 0 },
     comments: [
       {
         user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        text: { type: String, required: true },
-        createdAt: { type: Date, default: Date.now },
+        text: String,
+        createdAt: Date,
       },
     ],
+    tags: [String],
   },
   { timestamps: true }
 );

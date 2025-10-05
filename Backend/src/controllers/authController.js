@@ -2,112 +2,115 @@ import User from "../models/User.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+// ✅ Signup Controller
 export const Signup = async (req, res) => {
   try {
-    const { name, email, password, role, bio } = req.body;
+    console.log("Signup request received");
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
+    const { name, email, password } = req.body;
+    if (!name || !email || !password)
+      return res.status(400).json({ msg: "All fields are required" });
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    // Check if user already exists
+    const existing = await User.findOne({ email });
+    if (existing)
       return res.status(400).json({ msg: "User already exists" });
-    }
 
-    const newUser = new User({ name, email, password, role, bio });
-    await newUser.save();
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
- 
-const userResponse = {
-  id: newUser._id,
-  name: newUser.name,
-  email: newUser.email,
-  role: newUser.role,
-  bio: newUser.bio,
-};
-
-res.status(201).json({
-  msg: "User registered successfully",
-  user: userResponse,
-});
-  } catch (err) {
-    res.status(500).json({
-      msg: "Error creating user",
-      error: err.message,
+    // Create new user
+    const newUser = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: "user",
     });
+
+    // Response without password
+    const userResponse = {
+      id: newUser._id,
+      name: newUser.name,
+      email: newUser.email,
+      role: newUser.role,
+    };
+
+    res
+      .status(201)
+      .json({
+        msg: "User created successfully",
+        user: userResponse,
+      });
+  } catch (err) {
+    console.error("Signup Error:", err.message);
+    res.status(500).json({ msg: "Signup failed", error: err.message });
   }
 };
 
-
+// ✅ Login Controller
 export const Login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    
+    // Validate input
+    if (!email || !password)
+      return res.status(400).json({ msg: "Email and password are required" });
+
+    // Find user
     const user = await User.findOne({ email }).select("+password");
-    if (!user) {
-      return res.status(400).json({ msg: "Invalid email address" });
-    }
+    if (!user) return res.status(400).json({ msg: "Invalid credentials" });
 
-  
+    // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ msg: "Wrong password" });
-    }
+    if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
 
-
+    // Generate JWT
     const token = jwt.sign(
-      { id: user._id,
-         email: user.email, 
-         role: user.role },
+      { id: user._id },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "24h" }
     );
 
-    
+    // Cookie options
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000, 
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
     };
 
-    
+    // Response without password
     const userResponse = {
       id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
-      bio: user.bio,
     };
 
-  
-    return res
+    res
       .cookie("token", token, cookieOptions)
       .status(200)
       .json({
         msg: "Login successful",
-        token, 
+        token,
         user: userResponse,
       });
-
   } catch (err) {
-    return res.status(500).json({ msg: "Error logging in", error: err.message });
+    console.error("Login Error:", err.message);
+    res.status(500).json({ msg: "Login failed", error: err.message });
   }
 };
 
-
-export const Logout = async (req, res) => {
+// ✅ Logout Controller
+export const Logout = (req, res) => {
   try {
     res.clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
     });
-
-    return res.status(200).json({ msg: "Logout successful" });
+    res.status(200).json({ msg: "Logout successful" });
   } catch (err) {
-    return res.status(500).json({ msg: "Error logging out", error: err.message });
+    res.status(500).json({ msg: "Logout failed", error: err.message });
   }
 };
