@@ -29,6 +29,9 @@ const Navbar = () => {
                 <Link to="/create-post" className="text-gray-700 hover:text-blue-600">
                   Upload
                 </Link>
+                <Link to="/favorites" className="text-gray-700 hover:text-blue-600">
+                  Favorites
+                </Link>
                 <Link to="/my-posts" className="text-gray-700 hover:text-blue-600">
                   My Posts
                 </Link>
@@ -56,6 +59,9 @@ const Navbar = () => {
               <div className="flex items-center space-x-2">
                 <Link to="/posts" className="text-gray-700 hover:text-blue-600">
                   Browse
+                </Link>
+                <Link to="/search" className="text-gray-700 hover:text-blue-600">
+                  Search
                 </Link>
                 <Link to="/login" className="btn btn-secondary">
                   Login

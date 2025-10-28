@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { postApi } from '../api/postApi';
+import RatingStars from './RatingStars';
+import FavoriteButton from './FavoriteButton';
 
 const PostCard = ({ post, onDelete }) => {
   const { user } = useAuth();
@@ -16,8 +19,6 @@ const PostCard = ({ post, onDelete }) => {
     setLoading(true);
     try {
       const response = await postApi.downloadPost(post._id);
-      
-      // Create blob URL for download
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -39,7 +40,6 @@ const PostCard = ({ post, onDelete }) => {
     try {
       await postApi.purchasePost(post._id);
       alert('Purchase successful! You can now download the wallpaper.');
-      // Refresh the post data or update local state
       window.location.reload();
     } catch (error) {
       console.error('Purchase failed:', error);
@@ -66,43 +66,82 @@ const PostCard = ({ post, onDelete }) => {
   };
 
   return (
-    <div className="card overflow-hidden hover:shadow-md transition-shadow duration-300">
-      {/* Post Image */}
-      <div className="aspect-w-16 aspect-h-9 bg-gray-200">
-        <img
-          src={imageError ? '/placeholder-image.jpg' : post.imageUrl}
-          alt={post.title}
-          className="w-full h-48 object-cover"
-          onError={() => setImageError(true)}
-        />
+    <div className="card overflow-hidden hover:shadow-md transition-shadow duration-300 group">
+      {/* Image with Overlay */}
+      <div className="relative aspect-w-16 aspect-h-9 bg-gray-200">
+        <Link to={`/post/${post._id}`}>
+          <img
+            src={imageError ? '/placeholder-image.jpg' : post.image}
+            alt={post.title}
+            className="w-full h-48 object-cover"
+            onError={() => setImageError(true)}
+          />
+        </Link>
+        
+        {/* Favorite Button Overlay */}
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <FavoriteButton postId={post._id} size="sm" />
+        </div>
+
+        {/* Price Badge */}
+        <div className="absolute top-2 left-2">
+          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+            post.price > 0 ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'
+          }`}>
+            {post.price > 0 ? `$${post.price}` : 'Free'}
+          </span>
+        </div>
       </div>
 
       {/* Post Content */}
       <div className="p-4">
-        <h3 className="font-semibold text-lg mb-2 truncate">{post.title}</h3>
-        
+        <Link to={`/post/${post._id}`}>
+          <h3 className="font-semibold text-lg mb-2 hover:text-blue-600 transition-colors line-clamp-2">
+            {post.title}
+          </h3>
+        </Link>
+
+        {/* Rating */}
+        <div className="mb-3">
+          <RatingStars 
+            postId={post._id} 
+            size="sm" 
+            showAverage={true}
+            interactive={false}
+          />
+        </div>
+
         {/* Categories and Tags */}
         <div className="flex flex-wrap gap-1 mb-3">
           <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
             {post.category}
           </span>
-          {post.tags?.slice(0, 3).map((tag, index) => (
+          {post.tags?.slice(0, 2).map((tag, index) => (
             <span key={index} className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">
               {tag}
             </span>
           ))}
+          {post.tags && post.tags.length > 2 && (
+            <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">
+              +{post.tags.length - 2}
+            </span>
+          )}
         </div>
 
-        {/* Price and Author */}
-        <div className="flex justify-between items-center mb-3">
-          <span className={`text-lg font-bold ${
-            post.price > 0 ? 'text-green-600' : 'text-gray-600'
-          }`}>
-            {post.price > 0 ? `$${post.price}` : 'Free'}
-          </span>
-          <span className="text-sm text-gray-500">
-            by {post.author?.name || 'Unknown'}
-          </span>
+        {/* Author and Stats */}
+        <div className="flex justify-between items-center mb-3 text-sm text-gray-500">
+          <div className="flex items-center space-x-2">
+            <img
+              src={post.author?.profilePic?.url || '/default-avatar.png'}
+              alt={post.author?.name}
+              className="w-6 h-6 rounded-full"
+            />
+            <span>{post.author?.name}</span>
+          </div>
+          <div className="flex items-center space-x-3">
+            <span>👁️ {post.viewCount || 0}</span>
+            <span>💾 {post.downloadCount || 0}</span>
+          </div>
         </div>
 
         {/* Action Buttons */}
@@ -113,7 +152,7 @@ const PostCard = ({ post, onDelete }) => {
               disabled={loading}
               className="flex-1 btn btn-primary text-sm disabled:opacity-50"
             >
-              {loading ? 'Processing...' : `Purchase $${post.price}`}
+              {loading ? '...' : `Buy $${post.price}`}
             </button>
           ) : (
             <button
@@ -121,7 +160,7 @@ const PostCard = ({ post, onDelete }) => {
               disabled={loading}
               className="flex-1 btn btn-primary text-sm disabled:opacity-50"
             >
-              {loading ? 'Downloading...' : 'Download'}
+              {loading ? '...' : 'Download'}
             </button>
           )}
 

@@ -13,6 +13,9 @@ const Profile = lazy(() => import('../pages/Profile'));
 const PostList = lazy(() => import('../pages/Posts/PostList'));
 const CreatePost = lazy(() => import('../pages/Posts/CreatePost'));
 const MyPosts = lazy(() => import('../pages/Posts/MyPosts'));
+const PostDetails = lazy(() => import('../pages/Posts/PostDetails'));
+const Favorites = lazy(() => import('../pages/Favorites'));
+const SearchResults = lazy(() => import('../pages/SearchResults'));
 
 const AppRoutes = () => {
   const { loading } = useAuth();
@@ -29,6 +32,8 @@ const AppRoutes = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/posts" element={<PostList />} />
+        <Route path="/post/:postId" element={<PostDetails />} />
+        <Route path="/search" element={<SearchResults />} />
 
         {/* Protected Routes */}
         <Route
@@ -54,6 +59,15 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <MyPosts />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/favorites"
+          element={
+            <ProtectedRoute>
+              <Favorites />
             </ProtectedRoute>
           }
         />
