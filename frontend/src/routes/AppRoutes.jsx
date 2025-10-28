@@ -3,13 +3,16 @@ import { useAuth } from '../context/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Loader from '../components/Loader';
 
-// Lazy load components for better performance
+// Lazy load components
 import { lazy, Suspense } from 'react';
 
 const Home = lazy(() => import('../pages/Home'));
 const Login = lazy(() => import('../pages/Auth/Login'));
 const Signup = lazy(() => import('../pages/Auth/Signup'));
 const Profile = lazy(() => import('../pages/Profile'));
+const PostList = lazy(() => import('../pages/Posts/PostList'));
+const CreatePost = lazy(() => import('../pages/Posts/CreatePost'));
+const MyPosts = lazy(() => import('../pages/Posts/MyPosts'));
 
 const AppRoutes = () => {
   const { loading } = useAuth();
@@ -25,6 +28,7 @@ const AppRoutes = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/posts" element={<PostList />} />
 
         {/* Protected Routes */}
         <Route
@@ -35,8 +39,26 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+        
+        <Route
+          path="/create-post"
+          element={
+            <ProtectedRoute>
+              <CreatePost />
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/my-posts"
+          element={
+            <ProtectedRoute>
+              <MyPosts />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Admin Routes - Placeholder for now */}
+        {/* Admin Routes */}
         <Route
           path="/admin"
           element={

@@ -23,8 +23,14 @@ const Navbar = () => {
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
               <>
-                <Link to="/" className="text-gray-700 hover:text-blue-600">
-                  Home
+                <Link to="/posts" className="text-gray-700 hover:text-blue-600">
+                  Browse
+                </Link>
+                <Link to="/create-post" className="text-gray-700 hover:text-blue-600">
+                  Upload
+                </Link>
+                <Link to="/my-posts" className="text-gray-700 hover:text-blue-600">
+                  My Posts
                 </Link>
                 <Link to="/profile" className="text-gray-700 hover:text-blue-600">
                   Profile
@@ -48,6 +54,9 @@ const Navbar = () => {
               </>
             ) : (
               <div className="flex items-center space-x-2">
+                <Link to="/posts" className="text-gray-700 hover:text-blue-600">
+                  Browse
+                </Link>
                 <Link to="/login" className="btn btn-secondary">
                   Login
                 </Link>
