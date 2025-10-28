@@ -1,20 +1,20 @@
-import { useAuth } from "../context/auth";
-import { Navigate } from "react-router-dom";
+import { useAuth } from '../context/AuthContext';
+import { Navigate } from 'react-router-dom';
+import Loader from './Loader';
 
-const ROLE_PERMISSIONS = {
-  user: ["read_posts", "purchase_posts", "upload_profile_pic", "create_posts", "save_posts"],
-  manager: ["read_posts", "create_posts", "edit_posts", "moderate_comments", "upload_profile_pic", "save_posts"],
-  admin: ["read_posts", "create_posts", "edit_posts", "delete_posts", "manage_users", "upload_profile_pic", "save_posts"],
-};
+const ProtectedRoute = ({ children, requiredRole }) => {
+  const { isAuthenticated, user, loading } = useAuth();
 
-const ProtectedRoute = ({ children, permission = null }) => {
-  const { user, loading } = useAuth();
+  if (loading) {
+    return <Loader />;
+  }
 
-  if (loading) return <div>Loading...</div>;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
-  if (permission && !ROLE_PERMISSIONS[user.role]?.includes(permission)) {
-    return <div>Access Denied</div>; // or <Navigate to="/unauthorized" replace />
+  if (requiredRole && user?.role !== requiredRole && user?.role !== 'admin') {
+    return <Navigate to="/" replace />;
   }
 
   return children;
