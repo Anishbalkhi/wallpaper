@@ -30,7 +30,7 @@ app.use("/api/post" , postRouter);
 
 
 
-const PORT = process.env.PORT || 5003;
+const PORT = 5000;
 app.get("/",(req,res)=>{
   res.send("api working")
 })

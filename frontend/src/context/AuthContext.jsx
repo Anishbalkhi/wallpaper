@@ -1,6 +1,8 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
-const AuthContext = createContext();
+
+export const AuthContext = createContext();
+
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -10,53 +12,122 @@ export const useAuth = () => {
   return context;
 };
 
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      const storedToken = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
-      
-      if (storedToken && storedUser) {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-      }
-      setLoading(false);
-    };
-
-    initializeAuth();
+    checkAuthStatus();
   }, []);
 
-  const login = (userData, authToken) => {
-    localStorage.setItem('token', authToken);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setToken(authToken);
-    setUser(userData);
+  const checkAuthStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+
+        setUser({ 
+          id: '1', 
+          name: 'Test User', 
+          email: 'test@example.com',
+          role: 'user'
+        });
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      localStorage.removeItem('token');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setToken(null);
-    setUser(null);
+  const login = async (email, password) => {
+    try {
+      setError('');
+      setLoading(true);
+      
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+   
+      const user = { 
+        id: '1', 
+        name: 'Test User', 
+        email: email,
+        role: 'user'
+      };
+      const token = 'mock-jwt-token';
+      
+      localStorage.setItem('token', token);
+      setUser(user);
+      
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.msg || 'Login failed';
+      setError(message);
+      return { success: false, error: message };
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateUser = (userData) => {
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
+  const signup = async (userData) => {
+    try {
+      setError('');
+      setLoading(true);
+      
+    
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+
+      const user = { 
+        id: '1', 
+        name: userData.name, 
+        email: userData.email,
+        role: 'user'
+      };
+      const token = 'mock-jwt-token';
+      
+      localStorage.setItem('token', token);
+      setUser(user);
+      
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.msg || 'Signup failed';
+      setError(message);
+      return { success: false, error: message };
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const logout = async () => {
+    try {
+      setLoading(true);
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('token');
+      setUser(null);
+      setLoading(false);
+    }
+  };
+
+  const clearError = () => setError('');
 
   const value = {
     user,
-    token,
+    loading,
+    error,
     login,
+    signup,
     logout,
-    updateUser,
-    isAuthenticated: !!token,
-    loading
+    clearError,
+    isAuthenticated: !!user,
   };
 
   return (

@@ -9,13 +9,13 @@ export const managerController = (req, res) =>
 export const userController = (req, res) =>
   res.status(200).json({ msg: "user" });
 
-// ✅ Add this function
+
 export const getMyProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     if (!user) return res.status(404).json({ msg: "User not found" });
 
-    res.status(200).json(user); // send user directly
+    res.status(200).json({ user }); // Fixed: wrap in object for consistency
   } catch (err) {
     res.status(500).json({ msg: "Failed to fetch profile", error: err.message });
   }

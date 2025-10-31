@@ -93,26 +93,6 @@ export const getPosts = async (req, res) => {
 };
 
 
-// Get current user's posts
-export const getMyPosts = async (req, res) => {
-  try {
-    const posts = await Post.find({ author: req.user.id })
-      .sort({ createdAt: -1 })
-      .populate("author", "name profilePic");
-
-    res.status(200).json({ 
-      success: true, 
-      posts 
-    });
-  } catch (err) {
-    res.status(500).json({ 
-      msg: "Failed to fetch your posts", 
-      error: err.message 
-    });
-  }
-};
-
-
 export const purchasePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.postId);
@@ -156,5 +136,3 @@ export const downloadPost = async (req, res) => {
     res.status(500).json({ msg: err.message });
   }
 };
-
-
