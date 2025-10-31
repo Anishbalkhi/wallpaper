@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const Signup = () => {
@@ -14,6 +14,10 @@ const Signup = () => {
   
   const { signup, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the intended destination or default to dashboard
+  const from = location.state?.from?.pathname || '/dashboard';
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -21,14 +25,14 @@ const Signup = () => {
       ...prev,
       [name]: value
     }));
-
+    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
         [name]: ''
       }));
     }
-  
+    // Clear auth error when user starts typing
     if (authError) {
       clearError();
     }
@@ -37,27 +41,28 @@ const Signup = () => {
   const validateForm = () => {
     const newErrors = {};
 
-
+    // Name validation
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
     } else if (formData.name.trim().length < 2) {
       newErrors.name = 'Name must be at least 2 characters';
     }
 
-
+    // Email validation
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
 
-  
+    // Password validation
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
 
+    // Confirm password validation
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Please confirm your password';
     } else if (formData.password !== formData.confirmPassword) {
@@ -85,7 +90,8 @@ const Signup = () => {
       });
 
       if (result.success) {
-        navigate('/dashboard');
+        // Redirect to the intended page or dashboard
+        navigate(from, { replace: true });
       }
     } catch (error) {
       console.error('Signup error:', error);
@@ -120,7 +126,7 @@ const Signup = () => {
             </div>
           )}
 
-      
+          {/* Name Field */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
               Full Name
@@ -141,7 +147,7 @@ const Signup = () => {
             )}
           </div>
 
-     
+          {/* Email Field */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
               Email Address
@@ -162,6 +168,7 @@ const Signup = () => {
             )}
           </div>
 
+          {/* Password Field */}
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
               Password
@@ -182,7 +189,7 @@ const Signup = () => {
             )}
           </div>
 
- 
+          {/* Confirm Password Field */}
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
               Confirm Password
@@ -203,6 +210,7 @@ const Signup = () => {
             )}
           </div>
 
+          {/* Submit Button */}
           <div>
             <button
               type="submit"
@@ -225,7 +233,7 @@ const Signup = () => {
             </button>
           </div>
 
-
+          {/* Login Link */}
           <div className="text-center">
             <p className="text-sm text-gray-600">
               Already have an account?{' '}
@@ -236,7 +244,7 @@ const Signup = () => {
           </div>
         </form>
 
-  
+        {/* Terms Notice */}
         <p className="text-center text-xs text-gray-500">
           By creating an account, you agree to our{' '}
           <a href="#" className="text-blue-600 hover:text-blue-500">

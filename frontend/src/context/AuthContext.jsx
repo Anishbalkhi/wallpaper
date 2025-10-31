@@ -1,9 +1,9 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
-
+// Create and export the context
 export const AuthContext = createContext();
 
-
+// Custom hook
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -12,28 +12,47 @@ export const useAuth = () => {
   return context;
 };
 
-
+// Auth Provider Component
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-
+  // Enhanced auth persistence with localStorage
   useEffect(() => {
     checkAuthStatus();
+    
+    // Listen for storage events to sync across tabs
+    const handleStorageChange = (e) => {
+      if (e.key === 'token' && !e.newValue) {
+        // Token was removed in another tab
+        setUser(null);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const checkAuthStatus = async () => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-
-        setUser({ 
-          id: '1', 
-          name: 'Test User', 
-          email: 'test@example.com',
-          role: 'user'
-        });
+        // In a real app, this would verify the token with the backend
+        // For now, we'll use mock data but verify token exists
+        const isTokenValid = await validateToken(token);
+        
+        if (isTokenValid) {
+          setUser({ 
+            id: '1', 
+            name: 'Test User', 
+            email: 'test@example.com',
+            role: 'user'
+          });
+        } else {
+          // Token is invalid, remove it
+          localStorage.removeItem('token');
+        }
       }
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -43,15 +62,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Mock token validation
+  const validateToken = async (token) => {
+    // Simulate API call to validate token
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return token === 'mock-jwt-token'; // Simple validation for demo
+  };
+
   const login = async (email, password) => {
     try {
       setError('');
       setLoading(true);
       
-
+      // Mock API call - replace with actual API later
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-   
+      // Simulate successful login
       const user = { 
         id: '1', 
         name: 'Test User', 
@@ -60,6 +86,7 @@ export const AuthProvider = ({ children }) => {
       };
       const token = 'mock-jwt-token';
       
+      // Store token in localStorage for persistence
       localStorage.setItem('token', token);
       setUser(user);
       
@@ -78,10 +105,10 @@ export const AuthProvider = ({ children }) => {
       setError('');
       setLoading(true);
       
-    
+      // Mock API call - replace with actual API later
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-
+      // Simulate successful signup
       const user = { 
         id: '1', 
         name: userData.name, 
@@ -106,13 +133,15 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       setLoading(true);
-
+      // Mock API call for logout
       await new Promise(resolve => setTimeout(resolve, 500));
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      // Always clear local storage and state
       localStorage.removeItem('token');
       setUser(null);
+      setError('');
       setLoading(false);
     }
   };
