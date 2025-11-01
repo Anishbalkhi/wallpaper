@@ -43,20 +43,31 @@ export const AuthProvider = ({ children }) => {
         const isTokenValid = await validateToken(token);
         
         if (isTokenValid) {
-          setUser({ 
+          // Check if user has profile data in localStorage
+          const savedProfile = localStorage.getItem('userProfile');
+          const defaultUser = { 
             id: '1', 
             name: 'Test User', 
             email: 'test@example.com',
-            role: 'user'
-          });
+            role: localStorage.getItem('userRole') || 'user', // NEW: Get role from localStorage
+            profilePic: localStorage.getItem('profilePic') || null
+          };
+          
+          setUser(savedProfile ? { ...defaultUser, ...JSON.parse(savedProfile) } : defaultUser);
         } else {
           // Token is invalid, remove it
           localStorage.removeItem('token');
+          localStorage.removeItem('profilePic');
+          localStorage.removeItem('userProfile');
+          localStorage.removeItem('userRole'); // NEW: Remove role
         }
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       localStorage.removeItem('token');
+      localStorage.removeItem('profilePic');
+      localStorage.removeItem('userProfile');
+      localStorage.removeItem('userRole'); // NEW: Remove role
     } finally {
       setLoading(false);
     }
@@ -77,13 +88,21 @@ export const AuthProvider = ({ children }) => {
       // Mock API call - replace with actual API later
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // Check for saved profile data
+      const savedProfile = localStorage.getItem('userProfile');
+      const savedProfilePic = localStorage.getItem('profilePic');
+      const savedRole = localStorage.getItem('userRole'); // NEW: Get saved role
+      
       // Simulate successful login
-      const user = { 
+      const defaultUser = { 
         id: '1', 
         name: 'Test User', 
         email: email,
-        role: 'user'
+        role: savedRole || 'user', // NEW: Use saved role or default
+        profilePic: savedProfilePic || null
       };
+      
+      const user = savedProfile ? { ...defaultUser, ...JSON.parse(savedProfile) } : defaultUser;
       const token = 'mock-jwt-token';
       
       // Store token in localStorage for persistence
@@ -113,7 +132,8 @@ export const AuthProvider = ({ children }) => {
         id: '1', 
         name: userData.name, 
         email: userData.email,
-        role: 'user'
+        role: 'user', // NEW: Default role for new users
+        profilePic: null
       };
       const token = 'mock-jwt-token';
       
@@ -140,8 +160,126 @@ export const AuthProvider = ({ children }) => {
     } finally {
       // Always clear local storage and state
       localStorage.removeItem('token');
+      // Don't remove profilePic, userProfile, and userRole on logout to persist across sessions
       setUser(null);
       setError('');
+      setLoading(false);
+    }
+  };
+
+  // Update profile picture
+  const updateProfilePicture = async (imageData) => {
+    try {
+      setLoading(true);
+      
+      // Simulate API call to update profile picture
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Update user state with new profile picture
+      const updatedUser = {
+        ...user,
+        profilePic: imageData.url
+      };
+      
+      setUser(updatedUser);
+      
+      // Save to localStorage for persistence
+      localStorage.setItem('profilePic', imageData.url);
+      
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.msg || 'Failed to update profile picture';
+      setError(message);
+      return { success: false, error: message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Remove profile picture
+  const removeProfilePicture = async () => {
+    try {
+      setLoading(true);
+      
+      // Simulate API call to remove profile picture
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Update user state
+      const updatedUser = {
+        ...user,
+        profilePic: null
+      };
+      
+      setUser(updatedUser);
+      
+      // Remove from localStorage
+      localStorage.removeItem('profilePic');
+      
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.msg || 'Failed to remove profile picture';
+      setError(message);
+      return { success: false, error: message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update user profile information
+  const updateProfile = async (profileData) => {
+    try {
+      setLoading(true);
+      
+      // Simulate API call to update profile
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Update user state with new profile data
+      const updatedUser = {
+        ...user,
+        ...profileData
+      };
+      
+      setUser(updatedUser);
+      
+      // Save to localStorage for persistence (excluding sensitive data)
+      const { id, role, profilePic, ...profileToSave } = updatedUser;
+      localStorage.setItem('userProfile', JSON.stringify(profileToSave));
+      
+      return { success: true, user: updatedUser };
+    } catch (error) {
+      const message = error.response?.data?.msg || 'Failed to update profile';
+      setError(message);
+      return { success: false, error: message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // NEW: Function to update user role (for admin use)
+  const updateUserRole = async (userId, newRole) => {
+    try {
+      setLoading(true);
+      
+      // Simulate API call to update role
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Update current user's role if it's the same user
+      if (user.id === userId) {
+        const updatedUser = {
+          ...user,
+          role: newRole
+        };
+        
+        setUser(updatedUser);
+        localStorage.setItem('userRole', newRole); // NEW: Save role to localStorage
+      }
+      
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.msg || 'Failed to update user role';
+      setError(message);
+      return { success: false, error: message };
+    } finally {
       setLoading(false);
     }
   };
@@ -155,6 +293,10 @@ export const AuthProvider = ({ children }) => {
     login,
     signup,
     logout,
+    updateProfilePicture,
+    removeProfilePicture,
+    updateProfile,
+    updateUserRole, // NEW: Add role update function
     clearError,
     isAuthenticated: !!user,
   };
