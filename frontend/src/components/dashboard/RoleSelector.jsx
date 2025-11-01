@@ -1,3 +1,4 @@
+// components/dashboard/RoleSelector.js
 import React, { useState, useRef, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -6,7 +7,6 @@ const RoleSelector = ({ currentRole, onRoleChange, userId, disabled = false }) =
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -114,7 +114,11 @@ const RoleSelector = ({ currentRole, onRoleChange, userId, disabled = false }) =
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <div className={`w-3 h-3 rounded-full bg-${role.color}-500 mr-3`}></div>
+                    <div className={`w-3 h-3 rounded-full mr-3 ${
+                      role.color === 'red' ? 'bg-red-500' :
+                      role.color === 'yellow' ? 'bg-yellow-500' :
+                      'bg-green-500'
+                    }`}></div>
                     <span className="font-medium">{role.label}</span>
                   </div>
                   {currentRole === role.value && (
