@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import axios from 'axios';
 
 // Create and export the context
 export const AuthContext = createContext();
@@ -18,66 +19,41 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Enhanced auth persistence with localStorage
+  // Set axios base URL and credentials
+  useEffect(() => {
+    axios.defaults.baseURL = 'http://localhost:5000/api';
+    axios.defaults.withCredentials = true;
+  }, []);
+
+  // Enhanced auth persistence
   useEffect(() => {
     checkAuthStatus();
-    
-    // Listen for storage events to sync across tabs
-    const handleStorageChange = (e) => {
-      if (e.key === 'token' && !e.newValue) {
-        // Token was removed in another tab
-        setUser(null);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const checkAuthStatus = async () => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        // In a real app, this would verify the token with the backend
-        // For now, we'll use mock data but verify token exists
-        const isTokenValid = await validateToken(token);
+        // Use real API to verify token and get user data
+        const response = await axios.get('/users/me', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         
-        if (isTokenValid) {
-          // Check if user has profile data in localStorage
-          const savedProfile = localStorage.getItem('userProfile');
-          const defaultUser = { 
-            id: '1', 
-            name: 'Test User', 
-            email: 'test@example.com',
-            role: localStorage.getItem('userRole') || 'user', // NEW: Get role from localStorage
-            profilePic: localStorage.getItem('profilePic') || null
-          };
-          
-          setUser(savedProfile ? { ...defaultUser, ...JSON.parse(savedProfile) } : defaultUser);
+        if (response.data.success) {
+          setUser(response.data.user);
         } else {
           // Token is invalid, remove it
           localStorage.removeItem('token');
-          localStorage.removeItem('profilePic');
-          localStorage.removeItem('userProfile');
-          localStorage.removeItem('userRole'); // NEW: Remove role
         }
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       localStorage.removeItem('token');
-      localStorage.removeItem('profilePic');
-      localStorage.removeItem('userProfile');
-      localStorage.removeItem('userRole'); // NEW: Remove role
     } finally {
       setLoading(false);
     }
-  };
-
-  // Mock token validation
-  const validateToken = async (token) => {
-    // Simulate API call to validate token
-    await new Promise(resolve => setTimeout(resolve, 100));
-    return token === 'mock-jwt-token'; // Simple validation for demo
   };
 
   const login = async (email, password) => {
@@ -85,33 +61,25 @@ export const AuthProvider = ({ children }) => {
       setError('');
       setLoading(true);
       
-      // Mock API call - replace with actual API later
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Check for saved profile data
-      const savedProfile = localStorage.getItem('userProfile');
-      const savedProfilePic = localStorage.getItem('profilePic');
-      const savedRole = localStorage.getItem('userRole'); // NEW: Get saved role
-      
-      // Simulate successful login
-      const defaultUser = { 
-        id: '1', 
-        name: 'Test User', 
-        email: email,
-        role: savedRole || 'user', // NEW: Use saved role or default
-        profilePic: savedProfilePic || null
-      };
-      
-      const user = savedProfile ? { ...defaultUser, ...JSON.parse(savedProfile) } : defaultUser;
-      const token = 'mock-jwt-token';
-      
-      // Store token in localStorage for persistence
-      localStorage.setItem('token', token);
-      setUser(user);
-      
-      return { success: true };
+      // Use real API call
+      const response = await axios.post('/auth/login', {
+        email,
+        password
+      });
+
+      if (response.data.success) {
+        const { user, token } = response.data;
+        
+        // Store token in localStorage
+        localStorage.setItem('token', token);
+        setUser(user);
+        
+        return { success: true };
+      } else {
+        throw new Error(response.data.msg);
+      }
     } catch (error) {
-      const message = error.response?.data?.msg || 'Login failed';
+      const message = error.response?.data?.msg || error.message || 'Login failed';
       setError(message);
       return { success: false, error: message };
     } finally {
@@ -124,25 +92,21 @@ export const AuthProvider = ({ children }) => {
       setError('');
       setLoading(true);
       
-      // Mock API call - replace with actual API later
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Simulate successful signup
-      const user = { 
-        id: '1', 
-        name: userData.name, 
-        email: userData.email,
-        role: 'user', // NEW: Default role for new users
-        profilePic: null
-      };
-      const token = 'mock-jwt-token';
-      
-      localStorage.setItem('token', token);
-      setUser(user);
-      
-      return { success: true };
+      // Use real API call
+      const response = await axios.post('/auth/signup', userData);
+
+      if (response.data.success) {
+        const { user, token } = response.data;
+        
+        localStorage.setItem('token', token);
+        setUser(user);
+        
+        return { success: true };
+      } else {
+        throw new Error(response.data.msg);
+      }
     } catch (error) {
-      const message = error.response?.data?.msg || 'Signup failed';
+      const message = error.response?.data?.msg || error.message || 'Signup failed';
       setError(message);
       return { success: false, error: message };
     } finally {
@@ -153,14 +117,13 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       setLoading(true);
-      // Mock API call for logout
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Call backend logout
+      await axios.post('/auth/logout');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
       // Always clear local storage and state
       localStorage.removeItem('token');
-      // Don't remove profilePic, userProfile, and userRole on logout to persist across sessions
       setUser(null);
       setError('');
       setLoading(false);
@@ -172,21 +135,21 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      // Simulate API call to update profile picture
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Update user state with new profile picture
-      const updatedUser = {
-        ...user,
-        profilePic: imageData.url
-      };
-      
-      setUser(updatedUser);
-      
-      // Save to localStorage for persistence
-      localStorage.setItem('profilePic', imageData.url);
-      
-      return { success: true };
+      const formData = new FormData();
+      formData.append('file', imageData);
+
+      const response = await axios.post('/users/upload-profile-pic', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.data.success) {
+        setUser(response.data.user);
+        return { success: true };
+      } else {
+        throw new Error(response.data.msg);
+      }
     } catch (error) {
       const message = error.response?.data?.msg || 'Failed to update profile picture';
       setError(message);
@@ -201,19 +164,14 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      // Simulate API call to remove profile picture
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Update user state
+      // For removal, you might need to implement a separate endpoint
+      // For now, we'll update locally
       const updatedUser = {
         ...user,
         profilePic: null
       };
       
       setUser(updatedUser);
-      
-      // Remove from localStorage
-      localStorage.removeItem('profilePic');
       
       return { success: true };
     } catch (error) {
@@ -230,20 +188,14 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      // Simulate API call to update profile
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Update user state with new profile data
+      // You'll need to implement this endpoint in your backend
+      // For now, we'll update locally
       const updatedUser = {
         ...user,
         ...profileData
       };
       
       setUser(updatedUser);
-      
-      // Save to localStorage for persistence (excluding sensitive data)
-      const { id, role, profilePic, ...profileToSave } = updatedUser;
-      localStorage.setItem('userProfile', JSON.stringify(profileToSave));
       
       return { success: true, user: updatedUser };
     } catch (error) {
@@ -255,26 +207,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // NEW: Function to update user role (for admin use)
+  // Update user role (for admin use)
   const updateUserRole = async (userId, newRole) => {
     try {
       setLoading(true);
       
-      // Simulate API call to update role
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await axios.put(`/users/${userId}/role`, { role: newRole });
       
-      // Update current user's role if it's the same user
-      if (user.id === userId) {
-        const updatedUser = {
-          ...user,
-          role: newRole
-        };
+      if (response.data.success) {
+        // Update current user's role if it's the same user
+        if (user && user.id === userId) {
+          const updatedUser = {
+            ...user,
+            role: newRole
+          };
+          setUser(updatedUser);
+        }
         
-        setUser(updatedUser);
-        localStorage.setItem('userRole', newRole); // NEW: Save role to localStorage
+        return { success: true };
+      } else {
+        throw new Error(response.data.msg);
       }
-      
-      return { success: true };
     } catch (error) {
       const message = error.response?.data?.msg || 'Failed to update user role';
       setError(message);
@@ -296,7 +249,7 @@ export const AuthProvider = ({ children }) => {
     updateProfilePicture,
     removeProfilePicture,
     updateProfile,
-    updateUserRole, // NEW: Add role update function
+    updateUserRole,
     clearError,
     isAuthenticated: !!user,
   };

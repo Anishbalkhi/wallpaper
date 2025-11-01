@@ -6,12 +6,17 @@ import {
   userController, 
   managerController, 
   getMyProfile,
-  updateUserRole 
+  updateUserRole,
+  getAllUsers  // NEW: Add this import
 } from "../controllers/userController.js";
-import { uploadProfilePic } from "../controllers/postController.js"; // Import from correct location
+import { uploadProfilePic } from "../controllers/postController.js";
 import upload from "../config/multer.js";
 
 const router = express.Router();
+
+
+  
+
 
 // 👤 Logged-in user's own profile
 router.get("/me", verifyToken, getMyProfile);
@@ -19,8 +24,9 @@ router.get("/me", verifyToken, getMyProfile);
 // 👤 Upload profile picture
 router.post("/upload-profile-pic", verifyToken, upload.single("file"), uploadProfilePic);
 
-// 👑 Admin-only route
+// 👑 Admin-only routes
 router.get("/admin", verifyToken, checkPermission("manage_users"), adminController);
+router.get("/admin/users", verifyToken, checkPermission("manage_users"), getAllUsers); // NEW: Get all users
 
 // 👤 Normal user route
 router.get("/user", verifyToken, checkPermission("create_posts"), userController);

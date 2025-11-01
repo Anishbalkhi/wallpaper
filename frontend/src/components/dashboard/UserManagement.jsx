@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios'; // IMPORTANT: Add this import
 import RoleSelector from './RoleSelector';
 import { toast } from 'react-hot-toast';
 
@@ -11,36 +12,8 @@ const UserManagement = () => {
     total: 0,
     admins: 0,
     managers: 0,
-    users: 0,
-    active: 0
+    users: 0
   });
-
-  // Mock data generation
-  const generateMockUsers = () => {
-    const roles = ['user', 'user', 'user', 'manager', 'admin'];
-    const names = [
-      'John Doe', 'Jane Smith', 'Bob Johnson', 'Alice Brown', 
-      'Charlie Wilson', 'Diana Lee', 'Mike Chen', 'Sarah Johnson',
-      'David Kim', 'Emily Davis', 'Robert Wilson', 'Lisa Anderson'
-    ];
-    const statuses = ['active', 'active', 'active', 'suspended', 'inactive'];
-    
-    return Array.from({ length: 20 }, (_, i) => ({
-      _id: `user-${i + 1}`,
-      name: names[i % names.length],
-      email: `user${i + 1}@example.com`,
-      role: roles[i % roles.length],
-      profilePic: i % 3 === 0 ? {
-        url: `https://i.pravatar.cc/150?img=${i + 1}`,
-        publicId: `avatar-${i + 1}`
-      } : null,
-      bio: i % 2 === 0 ? 'Photography enthusiast and nature lover' : '',
-      posts: Math.floor(Math.random() * 20),
-      joinedDate: new Date(Date.now() - Math.random() * 31536000000).toISOString().split('T')[0],
-      status: statuses[i % statuses.length],
-      lastActive: new Date(Date.now() - Math.random() * 86400000).toISOString()
-    }));
-  };
 
   // Fetch users on component mount
   useEffect(() => {
@@ -52,19 +25,37 @@ const UserManagement = () => {
       setLoading(true);
       setError('');
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('No authentication token found');
+        return;
+      }
+
+      const response = await axios.get('/users/admin/users', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       
-      const mockUsers = generateMockUsers();
-      setUsers(mockUsers);
+      console.log('API Response:', response.data); // Debug log
       
-      // Calculate stats
-      updateStats(mockUsers);
-      
+      if (response.data.success) {
+        setUsers(response.data.users);
+        updateStats(response.data.users);
+      } else {
+        setError(response.data.msg || 'Failed to fetch users');
+      }
     } catch (err) {
-      const errorMsg = err.response?.data?.msg || 'Failed to fetch users';
+      const errorMsg = err.response?.data?.msg || err.message || 'Failed to fetch users';
       setError(errorMsg);
       console.error('Error fetching users:', err);
+      
+      // Fallback to mock data ONLY for development/demo
+      if (err.response?.status === 403) {
+        setError('Access denied. You need admin privileges.');
+      } else if (err.response?.status === 401) {
+        setError('Please login again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -75,65 +66,56 @@ const UserManagement = () => {
       total: userList.length,
       admins: userList.filter(user => user.role === 'admin').length,
       managers: userList.filter(user => user.role === 'manager').length,
-      users: userList.filter(user => user.role === 'user').length,
-      active: userList.filter(user => user.status === 'active').length
+      users: userList.filter(user => user.role === 'user').length
     });
   };
 
   const handleRoleChange = async (userId, newRole) => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Update local state
-      const updatedUsers = users.map(user => 
-        user._id === userId ? { ...user, role: newRole } : user
-      );
-      setUsers(updatedUsers);
-      updateStats(updatedUsers);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Please login again');
+        return;
+      }
 
-      toast.success(`Role updated to ${newRole}`);
+      const response = await axios.put(
+        `/api/users/${userId}/role`,
+        { role: newRole },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.data.success) {
+        // Update local state
+        const updatedUsers = users.map(user => 
+          user._id === userId ? { ...user, role: newRole } : user
+        );
+        setUsers(updatedUsers);
+        updateStats(updatedUsers);
+
+        toast.success(`Role updated to ${newRole}`);
+      } else {
+        toast.error(response.data.msg || 'Failed to update role');
+      }
     } catch (err) {
-      toast.error('Failed to update role');
+      const errorMsg = err.response?.data?.msg || 'Failed to update role';
+      toast.error(errorMsg);
       console.error('Error updating role:', err);
-    }
-  };
-
-  const handleStatusChange = async (userId, newStatus) => {
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const updatedUsers = users.map(user => 
-        user._id === userId ? { ...user, status: newStatus } : user
-      );
-      setUsers(updatedUsers);
-      updateStats(updatedUsers);
-
-      toast.success(`User status updated to ${newStatus}`);
-    } catch (err) {
-      toast.error('Failed to update user status');
-      console.error('Error updating status:', err);
     }
   };
 
   // Filter users based on search term
   const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
+    user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.role?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getStatusColors = (status) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800 border-green-200';
-      case 'suspended': return 'bg-red-100 text-red-800 border-red-200';
-      case 'inactive': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -142,6 +124,8 @@ const UserManagement = () => {
   };
 
   const getTimeAgo = (dateString) => {
+    if (!dateString) return 'Never';
+    
     const now = new Date();
     const date = new Date(dateString);
     const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
@@ -174,6 +158,7 @@ const UserManagement = () => {
         <button
           onClick={fetchUsers}
           className="mt-4 sm:mt-0 btn-secondary flex items-center"
+          disabled={loading}
         >
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -185,12 +170,25 @@ const UserManagement = () => {
       {/* Error Message */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
-          {error}
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {error}
+          </div>
+          {error.includes('Access denied') && (
+            <button 
+              onClick={fetchUsers}
+              className="mt-2 text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+            >
+              Retry
+            </button>
+          )}
         </div>
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg border shadow-sm">
           <div className="flex items-center">
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -246,20 +244,6 @@ const UserManagement = () => {
             </div>
           </div>
         </div>
-
-        <div className="bg-white p-4 rounded-lg border shadow-sm">
-          <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Active</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.active}</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Search Bar */}
@@ -298,13 +282,7 @@ const UserManagement = () => {
                   Role
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Posts
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Last Active
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Joined
@@ -317,7 +295,7 @@ const UserManagement = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
-                        {user.profilePic ? (
+                        {user.profilePic?.url ? (
                           <img
                             src={user.profilePic.url}
                             alt={user.name}
@@ -326,7 +304,7 @@ const UserManagement = () => {
                         ) : (
                           <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
                             <span className="text-blue-600 font-medium text-sm">
-                              {user.name.charAt(0).toUpperCase()}
+                              {user.name?.charAt(0).toUpperCase() || 'U'}
                             </span>
                           </div>
                         )}
@@ -349,25 +327,11 @@ const UserManagement = () => {
                       userId={user._id}
                     />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <select
-                      value={user.status}
-                      onChange={(e) => handleStatusChange(user._id, e.target.value)}
-                      className={`text-xs font-medium px-2 py-1 rounded-full border ${getStatusColors(user.status)} focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-                    >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                      <option value="suspended">Suspended</option>
-                    </select>
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.posts}
+                    {user.posts?.length || 0}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {getTimeAgo(user.lastActive)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(user.joinedDate)}
+                    {formatDate(user.createdAt)}
                   </td>
                 </tr>
               ))}
@@ -376,7 +340,7 @@ const UserManagement = () => {
         </div>
 
         {/* Empty State */}
-        {filteredUsers.length === 0 && (
+        {filteredUsers.length === 0 && !loading && (
           <div className="text-center py-12">
             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />

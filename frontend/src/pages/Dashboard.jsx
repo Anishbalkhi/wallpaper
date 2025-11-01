@@ -8,6 +8,13 @@ import Loader from '../components/ui/Loader';
 const Dashboard = () => {
   const { user, loading } = useAuth();
 
+  // Debug info
+  console.log('🛠️ Dashboard Debug:');
+  console.log('User:', user);
+  console.log('User Role:', user?.role);
+  console.log('Is Admin:', user?.role === 'admin');
+  console.log('Loading:', loading);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -29,6 +36,8 @@ const Dashboard = () => {
 
   // Render appropriate dashboard based on user role
   const renderDashboard = () => {
+    console.log('Rendering dashboard for role:', user.role);
+    
     switch (user.role) {
       case 'admin':
         return <AdminDashboard />;

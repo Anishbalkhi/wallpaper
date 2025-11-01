@@ -110,9 +110,9 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
     }
   };
 
-  const isValidSocialHandle = (handle) => {
-    return /^[a-zA-Z0-9._]+$/.test(handle);
-  };
+//   const isValidSocialHandle = (handle) => {
+//     return /^[a-zA-Z0-9._]+$/.test(handle);
+//   };
 
   const formatSocialUrl = (platform, handle) => {
     if (!handle) return '';

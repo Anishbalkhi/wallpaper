@@ -1,23 +1,76 @@
 import User from "../models/User.model.js";
 
-export const adminController = (req, res) =>
-  res.status(200).json({ msg: "admin" });
+// Get all users (Admin only)
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.status(200).json({ 
+      success: true, 
+      users,
+      count: users.length 
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      success: false,
+      msg: "Failed to fetch users", 
+      error: err.message 
+    });
+  }
+};
 
-export const managerController = (req, res) =>
-  res.status(200).json({ msg: "manager" });
+export const adminController = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+    res.status(200).json({ 
+      success: true,
+      msg: "Admin access granted", 
+      users,
+      userCount: users.length 
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      success: false,
+      msg: "Admin access failed", 
+      error: err.message 
+    });
+  }
+};
 
-export const userController = (req, res) =>
-  res.status(200).json({ msg: "user" });
+export const managerController = (req, res) => {
+  res.status(200).json({ 
+    success: true,
+    msg: "Manager access granted" 
+  });
+};
 
+export const userController = (req, res) => {
+  res.status(200).json({ 
+    success: true,
+    msg: "User access granted",
+    user: req.user 
+  });
+};
 
 export const getMyProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
-    if (!user) return res.status(404).json({ msg: "User not found" });
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        msg: "User not found" 
+      });
+    }
 
-    res.status(200).json({ user }); // Fixed: wrap in object for consistency
+    res.status(200).json({ 
+      success: true,
+      user 
+    });
   } catch (err) {
-    res.status(500).json({ msg: "Failed to fetch profile", error: err.message });
+    res.status(500).json({ 
+      success: false,
+      msg: "Failed to fetch profile", 
+      error: err.message 
+    });
   }
 };
 
@@ -25,19 +78,46 @@ export const updateUserRole = async (req, res) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
-    if (!["user", "manager", "admin"].includes(role))
-      return res.status(400).json({ msg: "Invalid role" });
+    
+    // Validate role
+    if (!["user", "manager", "admin"].includes(role)) {
+      return res.status(400).json({ 
+        success: false,
+        msg: "Invalid role. Must be: user, manager, or admin" 
+      });
+    }
 
-    const updated = await User.findByIdAndUpdate(
+    // Prevent self-demotion (admin cannot remove their own admin role)
+    if (id === req.user.id && role !== 'admin') {
+      return res.status(400).json({ 
+        success: false,
+        msg: "Cannot remove your own admin privileges" 
+      });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
       id,
       { role },
-      { new: true }
+      { new: true, runValidators: true }
     ).select("-password");
 
-    if (!updated) return res.status(404).json({ msg: "User not found" });
+    if (!updatedUser) {
+      return res.status(404).json({ 
+        success: false,
+        msg: "User not found" 
+      });
+    }
 
-    res.status(200).json({ msg: "Role updated", user: updated });
+    res.status(200).json({ 
+      success: true,
+      msg: `Role updated to ${role}`, 
+      user: updatedUser 
+    });
   } catch (err) {
-    res.status(500).json({ msg: "Update failed", error: err.message });
+    res.status(500).json({ 
+      success: false,
+      msg: "Update failed", 
+      error: err.message 
+    });
   }
 };
