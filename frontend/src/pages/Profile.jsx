@@ -105,10 +105,17 @@ const Profile = () => {
     }
   };
 
-  const handleEditSave = (updatedData) => {
-    setEditSuccess(true);
-    setShowEditModal(false);
-    setTimeout(() => setEditSuccess(false), 3000);
+  const handleEditSave = async (updatedData) => {
+    try {
+      const result = await updateProfile(updatedData);
+      if (result.success) {
+        setEditSuccess(true);
+        setShowEditModal(false);
+        setTimeout(() => setEditSuccess(false), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to update profile details:', error);
+    }
   };
 
   const handleEditCancel = () => {

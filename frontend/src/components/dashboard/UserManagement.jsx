@@ -1,9 +1,9 @@
 // components/dashboard/UserManagement.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { userAPI } from '../../services/api.js';
 import RoleSelector from './RoleSelector.jsx';
 import { toast } from 'react-hot-toast';
-import { useAuth } from '../../context/AuthContext.jsx';
+import { useAuth } from '../../context/AuthContext';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -28,11 +28,7 @@ const UserManagement = () => {
 
   const { user: currentUser } = useAuth();
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -53,7 +49,11 @@ const UserManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const updateStats = (userList) => {
     setStats({
@@ -236,6 +236,7 @@ const UserManagement = () => {
       setBulkAction('');
       toast.success(`✅ ${message}`);
     } catch (err) {
+      console.error('Bulk action failed:', err);
       toast.error('❌ Failed to perform bulk action');
     } finally {
       setActionLoading(null);

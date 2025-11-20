@@ -105,14 +105,14 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
     try {
       new URL(string);
       return true;
-    } catch (_) {
+    } catch {
       return false;
     }
   };
 
-//   const isValidSocialHandle = (handle) => {
-//     return /^[a-zA-Z0-9._]+$/.test(handle);
-//   };
+  const isValidSocialHandle = (handle) => {
+    return /^[a-zA-Z0-9._]+$/.test(handle);
+  };
 
   const formatSocialUrl = (platform, handle) => {
     if (!handle) return '';
@@ -152,10 +152,8 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
       // Update profile in context
       const result = await updateProfile(formattedData);
 
-      if (result.success) {
-        if (onSave) {
-          onSave(formattedData);
-        }
+      if (result.success && onSave) {
+        await onSave(formattedData);
       }
     } catch (error) {
       console.error('Failed to update profile:', error);

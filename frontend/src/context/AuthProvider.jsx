@@ -1,31 +1,17 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { AuthContext } from './AuthContext';
 
-// Create and export the context
-export const AuthContext = createContext();
-
-// Custom hook
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-// Auth Provider Component
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Set axios base URL and credentials
   useEffect(() => {
     axios.defaults.baseURL = 'http://localhost:5000/api';
     axios.defaults.withCredentials = true;
   }, []);
 
-  // Enhanced auth persistence
   useEffect(() => {
     checkAuthStatus();
   }, []);
@@ -34,22 +20,20 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        // Use real API to verify token and get user data
         const response = await axios.get('/users/me', {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
-        
+
         if (response.data.success) {
           setUser(response.data.user);
         } else {
-          // Token is invalid, remove it
           localStorage.removeItem('token');
         }
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
+    } catch (authError) {
+      console.error('Auth check failed:', authError);
       localStorage.removeItem('token');
     } finally {
       setLoading(false);
@@ -60,26 +44,24 @@ export const AuthProvider = ({ children }) => {
     try {
       setError('');
       setLoading(true);
-      
-      // Use real API call
+
       const response = await axios.post('/auth/login', {
         email,
         password
       });
 
       if (response.data.success) {
-        const { user, token } = response.data;
-        
-        // Store token in localStorage
+        const { user: loggedInUser, token } = response.data;
+
         localStorage.setItem('token', token);
-        setUser(user);
-        
+        setUser(loggedInUser);
+
         return { success: true };
-      } else {
-        throw new Error(response.data.msg);
       }
-    } catch (error) {
-      const message = error.response?.data?.msg || error.message || 'Login failed';
+
+      throw new Error(response.data.msg);
+    } catch (loginError) {
+      const message = loginError.response?.data?.msg || loginError.message || 'Login failed';
       setError(message);
       return { success: false, error: message };
     } finally {
@@ -91,22 +73,21 @@ export const AuthProvider = ({ children }) => {
     try {
       setError('');
       setLoading(true);
-      
-      // Use real API call
+
       const response = await axios.post('/auth/signup', userData);
 
       if (response.data.success) {
-        const { user, token } = response.data;
-        
+        const { user: newUser, token } = response.data;
+
         localStorage.setItem('token', token);
-        setUser(user);
-        
+        setUser(newUser);
+
         return { success: true };
-      } else {
-        throw new Error(response.data.msg);
       }
-    } catch (error) {
-      const message = error.response?.data?.msg || error.message || 'Signup failed';
+
+      throw new Error(response.data.msg);
+    } catch (signupError) {
+      const message = signupError.response?.data?.msg || signupError.message || 'Signup failed';
       setError(message);
       return { success: false, error: message };
     } finally {
@@ -117,12 +98,10 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       setLoading(true);
-      // Call backend logout
       await axios.post('/auth/logout');
-    } catch (error) {
-      console.error('Logout error:', error);
+    } catch (logoutError) {
+      console.error('Logout error:', logoutError);
     } finally {
-      // Always clear local storage and state
       localStorage.removeItem('token');
       setUser(null);
       setError('');
@@ -130,11 +109,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Update profile picture
   const updateProfilePicture = async (imageData) => {
     try {
       setLoading(true);
-      
+
       const formData = new FormData();
       formData.append('file', imageData);
 
@@ -147,11 +125,11 @@ export const AuthProvider = ({ children }) => {
       if (response.data.success) {
         setUser(response.data.user);
         return { success: true };
-      } else {
-        throw new Error(response.data.msg);
       }
-    } catch (error) {
-      const message = error.response?.data?.msg || 'Failed to update profile picture';
+
+      throw new Error(response.data.msg);
+    } catch (updateError) {
+      const message = updateError.response?.data?.msg || 'Failed to update profile picture';
       setError(message);
       return { success: false, error: message };
     } finally {
@@ -159,23 +137,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Remove profile picture
   const removeProfilePicture = async () => {
     try {
       setLoading(true);
-      
-      // For removal, you might need to implement a separate endpoint
-      // For now, we'll update locally
+
       const updatedUser = {
         ...user,
         profilePic: null
       };
-      
+
       setUser(updatedUser);
-      
+
       return { success: true };
-    } catch (error) {
-      const message = error.response?.data?.msg || 'Failed to remove profile picture';
+    } catch (removeError) {
+      const message = removeError.response?.data?.msg || 'Failed to remove profile picture';
       setError(message);
       return { success: false, error: message };
     } finally {
@@ -183,23 +158,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Update user profile information
   const updateProfile = async (profileData) => {
     try {
       setLoading(true);
-      
-      // You'll need to implement this endpoint in your backend
-      // For now, we'll update locally
+
       const updatedUser = {
         ...user,
         ...profileData
       };
-      
+
       setUser(updatedUser);
-      
+
       return { success: true, user: updatedUser };
-    } catch (error) {
-      const message = error.response?.data?.msg || 'Failed to update profile';
+    } catch (profileError) {
+      const message = profileError.response?.data?.msg || 'Failed to update profile';
       setError(message);
       return { success: false, error: message };
     } finally {
@@ -207,15 +179,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Update user role (for admin use)
   const updateUserRole = async (userId, newRole) => {
     try {
       setLoading(true);
-      
+
       const response = await axios.put(`/users/${userId}/role`, { role: newRole });
-      
+
       if (response.data.success) {
-        // Update current user's role if it's the same user
         if (user && user.id === userId) {
           const updatedUser = {
             ...user,
@@ -223,13 +193,13 @@ export const AuthProvider = ({ children }) => {
           };
           setUser(updatedUser);
         }
-        
+
         return { success: true };
-      } else {
-        throw new Error(response.data.msg);
       }
-    } catch (error) {
-      const message = error.response?.data?.msg || 'Failed to update user role';
+
+      throw new Error(response.data.msg);
+    } catch (roleError) {
+      const message = roleError.response?.data?.msg || 'Failed to update user role';
       setError(message);
       return { success: false, error: message };
     } finally {
@@ -260,3 +230,4 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+

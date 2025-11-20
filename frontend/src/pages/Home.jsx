@@ -1,9 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { postAPI } from '../services/api';
 
 const Home = () => {
   const { isAuthenticated, user } = useAuth();
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [limit] = useState(12); // Show 12 latest photos on home page
+
+  const fetchPosts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const response = await postAPI.getPosts({ 
+        limit,
+        page: 1
+      });
+      
+      if (response.data.success) {
+        setPosts(response.data.posts || []);
+      } else {
+        setError('Failed to load photos');
+      }
+    } catch (err) {
+      console.error('Error fetching posts:', err);
+      setError('Error loading photos. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [limit]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -85,6 +117,141 @@ const Home = () => {
         </div>
       </div>
 
+      {/* Featured Photos Gallery */}
+      <div className="mb-16">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Featured Photos</h2>
+            <p className="text-gray-600">Discover amazing photography from our community</p>
+          </div>
+          <Link 
+            to="/posts" 
+            className="text-blue-600 hover:text-blue-700 font-semibold flex items-center"
+          >
+            View All
+            <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading photos...</p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <p className="text-red-600">{error}</p>
+            <button
+              onClick={fetchPosts}
+              className="mt-4 text-blue-600 hover:text-blue-700 font-semibold"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="bg-gray-50 rounded-xl p-12 text-center">
+            <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No photos yet</h3>
+            <p className="text-gray-600 mb-6">Be the first to share your photography!</p>
+            {isAuthenticated && (
+              <Link 
+                to="/dashboard" 
+                className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              >
+                Upload Your First Photo
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {posts.map((post) => (
+              <Link
+                key={post._id}
+                to={isAuthenticated ? `/posts` : `/login`}
+                className="group bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+              >
+                <div className="relative aspect-square bg-gray-200 overflow-hidden">
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    loading="lazy"
+                  />
+                  {post.price > 0 && (
+                    <div className="absolute top-3 right-3 bg-black bg-opacity-75 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                      ${post.price}
+                    </div>
+                  )}
+                  {post.price === 0 && (
+                    <div className="absolute top-3 right-3 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                      Free
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <p className="text-white font-semibold text-lg line-clamp-2 mb-1">
+                        {post.title}
+                      </p>
+                      {post.author && (
+                        <div className="flex items-center text-white/90 text-sm">
+                          {post.author.profilePic?.url ? (
+                            <img
+                              src={post.author.profilePic.url}
+                              alt={post.author.name}
+                              className="w-5 h-5 rounded-full mr-2"
+                            />
+                          ) : (
+                            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mr-2">
+                              <span className="text-xs font-medium">
+                                {post.author.name?.charAt(0).toUpperCase() || 'U'}
+                              </span>
+                            </div>
+                          )}
+                          <span>{post.author.name || 'Unknown'}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                    {post.title}
+                  </h3>
+                  {post.author && (
+                    <p className="text-sm text-gray-500 mb-2">
+                      by {post.author.name || 'Unknown'}
+                    </p>
+                  )}
+                  {post.tags && post.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {post.tags.slice(0, 2).map((tag, index) => (
+                        <span
+                          key={index}
+                          className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                      {post.tags.length > 2 && (
+                        <span className="text-xs text-gray-400">
+                          +{post.tags.length - 2} more
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Stats Section */}
       <div className="bg-gray-50 rounded-2xl p-8 mb-16">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
@@ -93,7 +260,7 @@ const Home = () => {
             <div className="text-gray-600">Active Photographers</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-gray-900 mb-2">50K+</div>
+            <div className="text-3xl font-bold text-gray-900 mb-2">{posts.length > 0 ? '50K+' : '0'}</div>
             <div className="text-gray-600">Photos Uploaded</div>
           </div>
           <div>
