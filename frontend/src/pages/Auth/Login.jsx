@@ -14,7 +14,6 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Get the intended destination or default to dashboard
   const from = location.state?.from?.pathname || '/dashboard';
 
   const handleChange = (e) => {
@@ -64,11 +63,10 @@ const Login = () => {
       const result = await login(formData.email.toLowerCase(), formData.password);
 
       if (result.success) {
-        // Redirect to the intended page or dashboard
         navigate(from, { replace: true });
       }
     } catch (error) {
-      console.error('Login error:', error);
+      // Error is handled by AuthProvider
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +75,6 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        {/* Header */}
         <div className="text-center">
           <Link to="/" className="inline-flex items-center">
             <div className="w-12 h-12 bg-blue-600 rounded-lg"></div>
@@ -91,16 +88,13 @@ const Login = () => {
           </p>
         </div>
 
-        {/* Form */}
         <form className="mt-8 space-y-6 bg-white p-8 rounded-lg shadow-md" onSubmit={handleSubmit}>
-          {/* Server Error */}
           {authError && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
               {authError}
             </div>
           )}
 
-          {/* Email Field */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
               Email Address
@@ -121,7 +115,6 @@ const Login = () => {
             )}
           </div>
 
-          {/* Password Field */}
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
               Password
@@ -142,7 +135,6 @@ const Login = () => {
             )}
           </div>
 
-          {/* Submit Button */}
           <div>
             <button
               type="submit"
@@ -165,7 +157,6 @@ const Login = () => {
             </button>
           </div>
 
-          {/* Signup Link */}
           <div className="text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{' '}

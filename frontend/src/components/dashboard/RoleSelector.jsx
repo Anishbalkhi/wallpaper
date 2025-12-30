@@ -1,4 +1,3 @@
-// components/dashboard/RoleSelector.js
 import React, { useState, useRef, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 
@@ -15,7 +14,9 @@ const RoleSelector = ({ currentRole, onRoleChange, userId, disabled = false }) =
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const handleRoleSelect = async (newRole) => {
@@ -30,7 +31,6 @@ const RoleSelector = ({ currentRole, onRoleChange, userId, disabled = false }) =
       setIsOpen(false);
     } catch (error) {
       toast.error('Failed to update role');
-      console.error('Error updating role:', error);
     } finally {
       setLoading(false);
     }

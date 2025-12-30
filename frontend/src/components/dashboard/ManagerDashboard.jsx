@@ -97,7 +97,6 @@ const ApprovalItem = ({ id, onApprove, onReject }) => (
   </div>
 );
 
-// Report Item Component
 const ReportItem = ({ id }) => (
   <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg bg-red-50">
     <div className="flex items-center space-x-3">
@@ -118,7 +117,6 @@ const ReportItem = ({ id }) => (
   </div>
 );
 
-// Manager Action Button Component
 const ManagerAction = ({ icon, label, onClick }) => {
   const IconComponent = icon;
   return (
@@ -141,17 +139,16 @@ const ManagerDashboard = () => {
 
   const handleApprove = (id) => {
     setPendingApprovals(prev => prev - 1);
-    console.log(`Approved item ${id}`);
+    // TODO: Implement actual approval logic
   };
 
   const handleReject = (id) => {
     setPendingApprovals(prev => prev - 1);
-    console.log(`Rejected item ${id}`);
+    // TODO: Implement actual rejection logic
   };
 
   const handleManagerAction = (action) => {
-    console.log(`Manager action: ${action}`);
-    // In real app, this would navigate or open modals
+    // TODO: Implement manager action logic
   };
 
   const managerActions = [

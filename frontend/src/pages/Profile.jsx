@@ -16,15 +16,12 @@ const Profile = () => {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [editSuccess, setEditSuccess] = useState(false);
 
-  // Mock data for profile stats and activity
   useEffect(() => {
     const loadProfileData = async () => {
       setIsLoadingStats(true);
       try {
-        // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Mock profile statistics
         setProfileStats({
           totalPosts: 12,
           totalSales: 8,
@@ -34,7 +31,6 @@ const Profile = () => {
           following: 28
         });
 
-        // Mock recent activity
         setRecentActivity([
           {
             id: 1,
@@ -67,7 +63,7 @@ const Profile = () => {
           }
         ]);
       } catch (error) {
-        console.error('Failed to load profile data:', error);
+        // Silently handle error - stats will remain null
       } finally {
         setIsLoadingStats(false);
       }
@@ -89,7 +85,7 @@ const Profile = () => {
         }, 2000);
       }
     } catch (error) {
-      console.error('Failed to update profile picture:', error);
+      // Error is handled by updateProfilePicture
     }
   };
 
@@ -101,7 +97,7 @@ const Profile = () => {
         setTimeout(() => setUploadSuccess(false), 3000);
       }
     } catch (error) {
-      console.error('Failed to remove profile picture:', error);
+      // Error is handled by removeProfilePicture
     }
   };
 
@@ -114,7 +110,7 @@ const Profile = () => {
         setTimeout(() => setEditSuccess(false), 3000);
       }
     } catch (error) {
-      console.error('Failed to update profile details:', error);
+      // Error is handled by updateProfile
     }
   };
 
@@ -162,7 +158,6 @@ const Profile = () => {
 
   return (
     <div className="max-w-6xl mx-auto">
-      {/* Success Messages */}
       {uploadSuccess && (
         <div className="mb-6 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md">
           Profile picture updated successfully!
@@ -175,12 +170,10 @@ const Profile = () => {
         </div>
       )}
 
-      {/* Profile Header */}
       <div className="bg-white rounded-lg shadow-sm border mb-8 overflow-hidden">
         <div className="h-32 bg-gradient-to-r from-blue-500 to-purple-600"></div>
         <div className="px-8 pb-8">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between -mt-16">
-            {/* Profile Info */}
             <div className="flex flex-col md:flex-row md:items-end space-y-4 md:space-y-0 md:space-x-6">
               <div className="relative">
                 <div className="w-32 h-32 bg-white rounded-full border-4 border-white shadow-lg flex items-center justify-center">
@@ -223,7 +216,6 @@ const Profile = () => {
                 )}
                 <p className="text-sm text-gray-500 mt-2">Joined {new Date().toLocaleDateString()}</p>
                 
-                {/* Social Links */}
                 {(user.website || user.twitter || user.instagram || user.facebook) && (
                   <div className="flex space-x-3 mt-3">
                     {user.website && (
@@ -259,7 +251,6 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex space-x-3 mt-4 md:mt-0">
               <Link 
                 to="/dashboard" 
@@ -278,7 +269,6 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Profile Tabs */}
       <div className="bg-white rounded-lg shadow-sm border mb-6">
         <div className="border-b border-gray-200">
           <nav className="flex -mb-px">
@@ -299,11 +289,8 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Tab Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - Stats & Info */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Profile Statistics */}
           <div className="bg-white rounded-lg shadow-sm border p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Profile Statistics</h2>
             
@@ -341,7 +328,6 @@ const Profile = () => {
             )}
           </div>
 
-          {/* Profile Actions */}
           <div className="bg-white rounded-lg shadow-sm border p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Profile Actions</h2>
             <div className="space-y-3">
@@ -368,13 +354,12 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Account Information */}
           <div className="bg-white rounded-lg shadow-sm border p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Account Information</h2>
             <div className="space-y-3">
               <div>
                 <label className="text-sm font-medium text-gray-600">Member ID</label>
-                <p className="text-gray-900 font-mono">{user.id}</p>
+                <p className="text-gray-900 font-mono">{user._id || user.id || 'N/A'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-600">Account Type</label>
@@ -392,12 +377,9 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Right Column - Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Content based on active tab */}
           {activeTab === 'overview' && (
             <>
-              {/* About Section */}
               {user.bio && (
                 <div className="bg-white rounded-lg shadow-sm border p-6">
                   <div className="flex justify-between items-center mb-4">
@@ -415,7 +397,6 @@ const Profile = () => {
                 </div>
               )}
 
-              {/* Recent Activity */}
               <div className="bg-white rounded-lg shadow-sm border p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
                 
@@ -471,7 +452,6 @@ const Profile = () => {
           {activeTab === 'activity' && (
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">All Activity</h2>
-              {/* Extended activity timeline would go here */}
             </div>
           )}
 
@@ -497,7 +477,6 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Upload Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -523,7 +502,6 @@ const Profile = () => {
         </div>
       )}
 
-      {/* Edit Profile Modal */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50 overflow-y-auto">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full my-8">

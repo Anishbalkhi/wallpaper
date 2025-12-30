@@ -1,4 +1,3 @@
-// components/dashboard/UserManagement.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { userAPI } from '../../services/api.js';
 import RoleSelector from './RoleSelector.jsx';
@@ -45,7 +44,6 @@ const UserManagement = () => {
     } catch (err) {
       const errorMsg = err.response?.data?.msg || err.message || 'Failed to fetch users';
       setError(errorMsg);
-      console.error('Error fetching users:', err);
     } finally {
       setLoading(false);
     }
@@ -87,7 +85,6 @@ const UserManagement = () => {
     } catch (err) {
       const errorMsg = err.response?.data?.msg || 'Failed to update role';
       toast.error(errorMsg);
-      console.error('Error updating role:', err);
     } finally {
       setActionLoading(null);
     }
@@ -236,8 +233,8 @@ const UserManagement = () => {
       setBulkAction('');
       toast.success(`✅ ${message}`);
     } catch (err) {
-      console.error('Bulk action failed:', err);
-      toast.error('❌ Failed to perform bulk action');
+      const errorMsg = err.response?.data?.msg || 'Failed to perform bulk action';
+      toast.error(`❌ ${errorMsg}`);
     } finally {
       setActionLoading(null);
     }
@@ -532,7 +529,7 @@ const UserManagement = () => {
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900 flex items-center">
                           {user.name}
-                          {user._id === currentUser?.id && (
+                          {user._id === currentUser?._id && (
                             <span className="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
                               You
                             </span>
@@ -554,7 +551,7 @@ const UserManagement = () => {
                         currentRole={user.role}
                         onRoleChange={handleRoleChange}
                         userId={user._id}
-                        disabled={user._id === currentUser?.id || actionLoading === user._id}
+                        disabled={user._id === currentUser?._id || actionLoading === user._id}
                       />
                     </div>
                   </td>
@@ -563,7 +560,7 @@ const UserManagement = () => {
                       {user.role !== 'admin' && (
                         <button
                           onClick={() => handleQuickRoleChange(user._id, 'admin')}
-                          disabled={user._id === currentUser?.id || actionLoading === user._id}
+                          disabled={user._id === currentUser?._id || actionLoading === user._id}
                           className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                           Make Admin
@@ -572,7 +569,7 @@ const UserManagement = () => {
                       {user.role !== 'manager' && (
                         <button
                           onClick={() => handleQuickRoleChange(user._id, 'manager')}
-                          disabled={user._id === currentUser?.id || actionLoading === user._id}
+                          disabled={user._id === currentUser?._id || actionLoading === user._id}
                           className="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                           Make Manager
@@ -581,7 +578,7 @@ const UserManagement = () => {
                       {user.role !== 'user' && (
                         <button
                           onClick={() => handleQuickRoleChange(user._id, 'user')}
-                          disabled={user._id === currentUser?.id || actionLoading === user._id}
+                          disabled={user._id === currentUser?._id || actionLoading === user._id}
                           className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                           Make User

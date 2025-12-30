@@ -18,7 +18,6 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
 
   const { updateProfile } = useAuth();
 
-  // Initialize form with current user data
   useEffect(() => {
     if (currentUser) {
       setFormData({
@@ -43,7 +42,6 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
       [name]: value
     }));
 
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -51,7 +49,6 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
       }));
     }
 
-    // Update bio length counter
     if (name === 'bio') {
       setBioLength(value.length);
     }
@@ -60,31 +57,26 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Name validation
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
     } else if (formData.name.trim().length < 2) {
       newErrors.name = 'Name must be at least 2 characters';
     }
 
-    // Email validation
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
     }
 
-    // Bio validation
     if (formData.bio.length > 500) {
       newErrors.bio = 'Bio must be less than 500 characters';
     }
 
-    // Website validation
     if (formData.website && !isValidUrl(formData.website)) {
       newErrors.website = 'Please enter a valid URL';
     }
 
-    // Social media validation
     if (formData.twitter && !isValidSocialHandle(formData.twitter)) {
       newErrors.twitter = 'Please enter a valid Twitter handle (without @)';
     }
@@ -138,7 +130,6 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
     setIsLoading(true);
 
     try {
-      // Format social URLs
       const formattedData = {
         ...formData,
         twitter: formatSocialUrl('twitter', formData.twitter),
@@ -146,17 +137,15 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
         facebook: formatSocialUrl('facebook', formData.facebook)
       };
 
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Update profile in context
       const result = await updateProfile(formattedData);
 
       if (result.success && onSave) {
         await onSave(formattedData);
       }
     } catch (error) {
-      console.error('Failed to update profile:', error);
+      // Error is handled by updateProfile
     } finally {
       setIsLoading(false);
     }
@@ -171,12 +160,10 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
   return (
     <div className="max-w-2xl mx-auto">
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Information */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Name */}
             <div className="md:col-span-2">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                 Full Name *
@@ -195,7 +182,6 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
               )}
             </div>
 
-            {/* Email */}
             <div className="md:col-span-2">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email Address *
@@ -214,7 +200,6 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
               )}
             </div>
 
-            {/* Location */}
             <div className="md:col-span-2">
               <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
                 Location
@@ -232,7 +217,6 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
           </div>
         </div>
 
-        {/* Bio Section */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">About You</h3>
           
@@ -261,12 +245,10 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
           </div>
         </div>
 
-        {/* Links & Social Media */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Links & Social Media</h3>
           
           <div className="space-y-4">
-            {/* Website */}
             <div>
               <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
                 Website
@@ -285,9 +267,7 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
               )}
             </div>
 
-            {/* Social Media Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Twitter */}
               <div>
                 <label htmlFor="twitter" className="block text-sm font-medium text-gray-700 mb-1">
                   <span className="flex items-center">
@@ -316,7 +296,6 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
                 )}
               </div>
 
-              {/* Instagram */}
               <div>
                 <label htmlFor="instagram" className="block text-sm font-medium text-gray-700 mb-1">
                   <span className="flex items-center">
@@ -345,7 +324,6 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
                 )}
               </div>
 
-              {/* Facebook */}
               <div className="md:col-span-2">
                 <label htmlFor="facebook" className="block text-sm font-medium text-gray-700 mb-1">
                   <span className="flex items-center">
@@ -372,7 +350,6 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
           </div>
         </div>
 
-        {/* Preview Section */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Preview</h3>
           <div className="bg-gray-50 rounded-lg p-4 border">
@@ -407,7 +384,6 @@ const EditProfileForm = ({ onSave, onCancel, currentUser }) => {
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex justify-end space-x-3 pt-6 border-t">
           <button
             type="button"

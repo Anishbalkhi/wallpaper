@@ -13,7 +13,6 @@ const ImageUpload = ({ onUploadComplete, currentImage }) => {
 
   const { user } = useAuth();
 
-  // Handle drag events
   const handleDragEnter = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -43,14 +42,12 @@ const ImageUpload = ({ onUploadComplete, currentImage }) => {
   };
 
   const handleFileSelect = (file) => {
-    // Validate file type
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!validTypes.includes(file.type)) {
       setError('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setError('Image size must be less than 5MB');
       return;
@@ -59,7 +56,6 @@ const ImageUpload = ({ onUploadComplete, currentImage }) => {
     setError('');
     setSelectedImage(file);
 
-    // Create preview
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreviewUrl(e.target.result);
@@ -78,19 +74,16 @@ const ImageUpload = ({ onUploadComplete, currentImage }) => {
     setIsUploading(true);
     setUploadProgress(0);
 
-    // Simulate upload progress
     for (let i = 0; i <= 100; i += 10) {
       await new Promise(resolve => setTimeout(resolve, 100));
       setUploadProgress(i);
     }
 
-    // Simulate API call to Cloudinary
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // In a real app, this would be the Cloudinary response
     const mockCloudinaryResponse = {
       url: previewUrl,
-      publicId: `profile_${user.id}_${Date.now()}`,
+      publicId: `profile_${user?._id || user?.id || 'user'}_${Date.now()}`,
       format: selectedImage.type.split('/')[1]
     };
 
@@ -117,7 +110,6 @@ const ImageUpload = ({ onUploadComplete, currentImage }) => {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      {/* Upload Area */}
       <div
         className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 ${
           isDragging
@@ -129,7 +121,6 @@ const ImageUpload = ({ onUploadComplete, currentImage }) => {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {/* Current/Preview Image */}
         {previewUrl && (
           <div className="mb-4 flex justify-center">
             <div className="relative">
@@ -147,7 +138,6 @@ const ImageUpload = ({ onUploadComplete, currentImage }) => {
           </div>
         )}
 
-        {/* Upload Content */}
         {!previewUrl && (
           <div className="py-8">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -162,7 +152,6 @@ const ImageUpload = ({ onUploadComplete, currentImage }) => {
           </div>
         )}
 
-        {/* Progress Bar */}
         {isUploading && (
           <div className="mt-4">
             <div className="w-full bg-gray-200 rounded-full h-2">
@@ -177,14 +166,12 @@ const ImageUpload = ({ onUploadComplete, currentImage }) => {
           </div>
         )}
 
-        {/* Error Message */}
         {error && (
           <div className="mt-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
             {error}
           </div>
         )}
 
-        {/* Action Buttons */}
         <div className="mt-4 flex flex-col sm:flex-row gap-2 justify-center">
           {!selectedImage && !isUploading && (
             <>
@@ -227,7 +214,6 @@ const ImageUpload = ({ onUploadComplete, currentImage }) => {
           )}
         </div>
 
-        {/* Hidden File Input */}
         <input
           ref={fileInputRef}
           type="file"
@@ -237,7 +223,6 @@ const ImageUpload = ({ onUploadComplete, currentImage }) => {
         />
       </div>
 
-      {/* Upload Tips */}
       <div className="mt-4 text-xs text-gray-500">
         <p>💡 For best results, use a square image at least 400x400 pixels.</p>
       </div>
