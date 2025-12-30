@@ -1,4 +1,3 @@
-// components/dashboard/UserStats.js
 import React from 'react';
 
 const UserStats = ({ stats }) => {

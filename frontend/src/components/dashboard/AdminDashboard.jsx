@@ -17,7 +17,6 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
@@ -44,7 +43,6 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Admin Tabs */}
       <div className="bg-white rounded-lg shadow-sm border">
         <div className="border-b border-gray-200">
           <nav className="flex -mb-px">
@@ -65,10 +63,8 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Tab Content */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          {/* Admin Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             <div className="bg-white p-6 rounded-lg shadow-sm border">
               <div className="flex items-center">
@@ -142,7 +138,6 @@ const AdminDashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Quick Admin Actions */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
               <div className="space-y-3">
@@ -174,7 +169,6 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* System Health */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">System Health</h2>
               <div className="space-y-4">
@@ -208,7 +202,6 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Users Tab - Using UserManagement Component */}
       {activeTab === 'users' && (
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <UserManagement />

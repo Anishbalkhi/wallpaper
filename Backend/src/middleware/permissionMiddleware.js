@@ -3,7 +3,6 @@ import { ROLE_PERMISSIONS } from "../config/permissions.js";
 export const checkPermission = (requiredPermission) => {
   return (req, res, next) => {
     try {
-      // Check if user exists
       if (!req.user) {
         return res.status(401).json({ 
           success: false,
@@ -11,10 +10,8 @@ export const checkPermission = (requiredPermission) => {
         });
       }
 
-      // Get permissions for user's role
       const rolePermissions = ROLE_PERMISSIONS[req.user.role];
       
-      // Check if role exists in permissions config
       if (!rolePermissions) {
         return res.status(403).json({ 
           success: false,
@@ -22,7 +19,6 @@ export const checkPermission = (requiredPermission) => {
         });
       }
 
-      // Check if user has required permission
       if (!rolePermissions.includes(requiredPermission)) {
         return res.status(403).json({ 
           success: false,

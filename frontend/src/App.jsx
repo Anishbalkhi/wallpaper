@@ -16,10 +16,9 @@ function App() {
       <Router>
         <Layout>
           <Routes>
-            {/* Public routes - accessible to all */}
             <Route path="/" element={<Home />} />
             
-            {/* Auth routes - only accessible to non-authenticated users */}
+            
             <Route 
               path="/login" 
               element={
@@ -37,7 +36,6 @@ function App() {
               } 
             />
             
-            {/* Protected routes - only accessible to authenticated users */}
             <Route 
               path="/dashboard" 
               element={
@@ -55,7 +53,6 @@ function App() {
               } 
             />
             
-            Fallback route
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Layout>

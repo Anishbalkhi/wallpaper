@@ -1,4 +1,3 @@
-// components/dashboard/BulkActions.js
 import React, { useState } from 'react';
 
 const BulkActions = ({ selectedCount, onBulkAction, onClearSelection, loading }) => {

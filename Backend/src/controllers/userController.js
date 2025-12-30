@@ -1,7 +1,6 @@
 import User from "../models/User.model.js";
-import Post from "../models/Post.model.js"; // NEW: Import Post model
+import Post from "../models/Post.model.js";
 
-// Get all users (Admin only)
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password");
@@ -80,7 +79,6 @@ export const updateUserRole = async (req, res) => {
     const { id } = req.params;
     const { role } = req.body;
     
-    // Validate role
     if (!["user", "manager", "admin"].includes(role)) {
       return res.status(400).json({ 
         success: false,
@@ -88,13 +86,14 @@ export const updateUserRole = async (req, res) => {
       });
     }
 
-    // Prevent self-demotion (admin cannot remove their own admin role)
-    if (id === req.user.id && role !== 'admin') {
-      return res.status(400).json({ 
-        success: false,
-        msg: "Cannot remove your own admin privileges" 
-      });
-    }
+
+if (req.user.role === "admin" && id === req.user.id.toString() && role !== "admin") {
+  return res.status(400).json({
+    success: false,
+    msg: "Admins cannot demote themselves. Ask another admin to change your role."
+  });
+}
+
 
     const updatedUser = await User.findByIdAndUpdate(
       id,
@@ -123,7 +122,6 @@ export const updateUserRole = async (req, res) => {
   }
 };
 
-// NEW: User status update controller
 export const updateUserStatus = async (req, res) => {
   try {
     const { suspended } = req.body;
@@ -154,7 +152,6 @@ export const updateUserStatus = async (req, res) => {
   }
 };
 
-// NEW: Delete user controller
 export const deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -166,7 +163,6 @@ export const deleteUser = async (req, res) => {
       });
     }
 
-    // Prevent self-deletion
     if (user._id.toString() === req.user.id) {
       return res.status(400).json({ 
         success: false,
@@ -174,10 +170,8 @@ export const deleteUser = async (req, res) => {
       });
     }
 
-    // Delete user's posts
     await Post.deleteMany({ author: req.params.id });
 
-    // Delete user
     await User.findByIdAndDelete(req.params.id);
 
     res.status(200).json({ 
@@ -193,7 +187,6 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-// NEW: User statistics controller
 export const getUserStats = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();

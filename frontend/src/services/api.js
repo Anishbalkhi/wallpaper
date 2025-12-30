@@ -1,57 +1,53 @@
-import axios from 'axios';
+// src/services/api.js
+import axios from "axios";
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
+  withCredentials: true, // <--- cookies (httpOnly) will be sent automatically
 });
 
-// Request interceptor
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// Do NOT add Authorization header from localStorage here.
+// Backend validates cookie. If you later support Bearer tokens, do it explicitly.
 
-// Response interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // central 401 handling: if backend returns 401, redirect to login
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Optionally: you could use an event emitter or store
+      // For simplicity, redirect to login page:
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }
 );
 
 export const authAPI = {
-  login: (credentials) => api.post('/auth/login', credentials),
-  signup: (userData) => api.post('/auth/signup', userData),
-  logout: () => api.post('/auth/logout'),
-  getCurrentUser: () => api.get('/users/me'),
+  login: (credentials) => api.post("/auth/login", credentials),
+  signup: (userData) => api.post("/auth/signup", userData),
+  logout: () => api.post("/auth/logout"),
+  getCurrentUser: () => api.get("/users/me"),
 };
 
 export const userAPI = {
-  getUsers: () => api.get('/users/admin/users'),
+  getUsers: () => api.get("/users/admin/users"),
   updateUserRole: (userId, role) => api.put(`/users/${userId}/role`, { role }),
-  updateUserStatus: (userId, status) => api.put(`/users/${userId}/status`, status),
+  updateUserStatus: (userId, statusObj) => api.put(`/users/${userId}/status`, statusObj),
   deleteUser: (userId) => api.delete(`/users/${userId}`),
-  getUserStats: () => api.get('/users/admin/stats'),
+  getUserStats: () => api.get("/users/admin/stats"),
 };
 
 export const postAPI = {
-  createPost: (formData) => api.post('/post/create', formData),
-  getPosts: (params) => api.get('/post/posts', { params }),
+  createPost: (formData) => api.post("/post/create", formData),
+  getPosts: (params) => api.get("/post/posts", { params }),
   deletePost: (postId) => api.delete(`/post/delete/${postId}`),
   purchasePost: (postId) => api.post(`/post/${postId}/purchase`),
   downloadPost: (postId) => api.get(`/post/${postId}/download`),
+  uploadProfilePic: (formData) => api.post("/users/upload-profile-pic", formData),
 };
 
 export default api;

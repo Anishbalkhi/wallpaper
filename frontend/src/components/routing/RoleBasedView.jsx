@@ -1,21 +1,16 @@
-import React from 'react';
-import { useAuth } from '../../context/AuthContext';
+// src/components/routing/RoleBasedView.jsx
+import React from "react";
+import { useAuth } from "../../context/AuthContext";
 
-const RoleBasedView = ({ children, allowedRoles, fallback = null }) => {
+/*
+  RoleBasedView is a small UI convenience. Important: never rely on it
+  for security. Backend must enforce permissions.
+*/
+const RoleBasedView = ({ children, allowedRoles = [], fallback = null }) => {
   const { user } = useAuth();
 
-  // If no user is logged in, show fallback
-  if (!user) {
-    return fallback;
-  }
-
-  // If user's role is in allowedRoles, show children
-  if (allowedRoles.includes(user.role)) {
-    return children;
-  }
-
-  // Otherwise, show fallback
-  return fallback;
+  if (!user) return fallback;
+  return allowedRoles.includes(user.role) ? children : fallback;
 };
 
 export default RoleBasedView;

@@ -15,7 +15,6 @@ const PublicRoute = ({ children }) => {
     );
   }
 
-  // If user is authenticated, redirect them away from public routes (login/signup)
   if (isAuthenticated) {
     const from = location.state?.from?.pathname || '/dashboard';
     return <Navigate to={from} replace />;

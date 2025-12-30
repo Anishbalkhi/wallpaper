@@ -4,35 +4,27 @@ import cloudinary from "../config/cloudinary.js";
 
 export const uploadProfilePic = async (req, res) => {
   try {
+    // multer + cloudinary storage will set req.file.path or req.file.filename depending on storage
+    // In multer-storage-cloudinary, file.path is usually the secure_url
+    const userId = req.user.id;
     if (!req.file) {
-      return res.status(400).json({ 
-        success: false,
-        msg: "No file uploaded" 
-      });
+      return res.status(400).json({ success: false, msg: "No file uploaded" });
     }
 
+    // handle various storage outputs
+    const url = req.file?.path || req.file?.location || req.file?.url || req.file?.secure_url;
+    const publicId = req.file?.filename || req.file?.public_id || req.file?.publicId;
+
     const updatedUser = await User.findByIdAndUpdate(
-      req.user.id,
-      {
-        profilePic: {
-          url: req.file.path,
-          publicId: req.file.filename,
-        },
-      },
+      userId,
+      { profilePic: { url, publicId } },
       { new: true }
     ).select("-password");
 
-    res.status(200).json({ 
-      success: true, 
-      msg: "Profile picture updated successfully",
-      user: updatedUser 
-    });
+    res.status(200).json({ success: true, msg: "Profile picture updated", user: updatedUser });
   } catch (err) {
-    res.status(500).json({ 
-      success: false,
-      msg: "Failed to upload profile picture", 
-      error: err.message 
-    });
+    console.error("uploadProfilePic error:", err);
+    res.status(500).json({ success: false, msg: "Failed to upload profile picture", error: err.message });
   }
 };
 
@@ -59,13 +51,11 @@ export const createPost = async (req, res) => {
 
     await post.save();
     
-    // Update user's posts array
     await User.findByIdAndUpdate(
       req.user.id, 
       { $push: { posts: post._id } }
     );
 
-    // Populate author info for response
     await post.populate('author', 'name profilePic');
 
     res.status(201).json({ 
@@ -74,7 +64,6 @@ export const createPost = async (req, res) => {
       post 
     });
   } catch (err) {
-    // Delete uploaded image if post creation fails
     if (req.file && req.file.filename) {
       await cloudinary.uploader.destroy(req.file.filename);
     }
@@ -99,7 +88,6 @@ export const deletePost = async (req, res) => {
       });
     }
 
-    // Authorization check
     if (req.user.role !== "admin" && post.author.toString() !== req.user.id) {
       return res.status(403).json({ 
         success: false,
@@ -107,15 +95,12 @@ export const deletePost = async (req, res) => {
       });
     }
 
-    // Delete from Cloudinary
     if (post.publicId) {
       await cloudinary.uploader.destroy(post.publicId);
     }
 
-    // Delete post from database
     await Post.findByIdAndDelete(postId);
 
-    // Remove post from user's posts array
     await User.findByIdAndUpdate(
       post.author,
       { $pull: { posts: postId } }
