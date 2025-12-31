@@ -9,7 +9,9 @@ import { AuthProvider } from './context/AuthProvider';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import PublicRoute from './components/routing/PublicRoute';
 import Profile from './pages/Profile';
-import "./App.css"
+import CreatePost from "./pages/CreatePost";
+
+import "./index.css"
 function App() {
   return (
     <AuthProvider>
@@ -52,6 +54,16 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+
+            <Route
+  path="/post/create"
+  element={
+    <ProtectedRoute>
+      <CreatePost />
+    </ProtectedRoute>
+  }
+/>
+
             
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

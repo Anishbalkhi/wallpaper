@@ -5,8 +5,9 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api"
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // <--- cookies (httpOnly) will be sent automatically
+  withCredentials: true,
 });
+
 
 // Do NOT add Authorization header from localStorage here.
 // Backend validates cookie. If you later support Bearer tokens, do it explicitly.
@@ -42,11 +43,22 @@ export const userAPI = {
 };
 
 export const postAPI = {
-  createPost: (formData) => api.post("/post/create", formData),
+ createPost: (formData) =>
+  api.post("/post/create", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  }),
+
   getPosts: (params) => api.get("/post/posts", { params }),
   deletePost: (postId) => api.delete(`/post/delete/${postId}`),
   purchasePost: (postId) => api.post(`/post/${postId}/purchase`),
-  downloadPost: (postId) => api.get(`/post/${postId}/download`),
+  downloadPost: (id) => api.get(`/post/${id}/download`),
+addComment: (id, text) =>
+  api.post(`/post/${id}/comment`, { text }),
+
+  likePost: (id) => api.post(`/post/${id}/like`),
+
   uploadProfilePic: (formData) => api.post("/users/upload-profile-pic", formData),
 };
 

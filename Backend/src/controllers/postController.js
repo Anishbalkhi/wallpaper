@@ -31,50 +31,55 @@ export const uploadProfilePic = async (req, res) => {
 export const createPost = async (req, res) => {
   try {
     const { title, price = 0, category, tags } = req.body;
-    
+
     if (!title || !req.file) {
-      return res.status(400).json({ 
-        success: false,
-        msg: "Title and image are required" 
-      });
+      return res.status(400).json({ success: false, msg: "Title and image are required" });
     }
 
-    const post = new Post({
+    const imageUrl =
+      req.file.path ||
+      req.file.secure_url ||
+      req.file.location;
+
+    const publicId =
+      req.file.filename ||
+      req.file.public_id;
+
+    const post = await Post.create({
       title,
       author: req.user.id,
-      image: req.file.path,
-      publicId: req.file.filename,
+      image: imageUrl,
+      publicId,
       price: Number(price),
       category,
-      tags: tags ? tags.split(",").map(tag => tag.trim()) : [],
+      tags: tags ? tags.split(",").map(t => t.trim()) : [],
     });
 
-    await post.save();
-    
-    await User.findByIdAndUpdate(
-      req.user.id, 
-      { $push: { posts: post._id } }
-    );
+    await User.findByIdAndUpdate(req.user.id, {
+      $push: { posts: post._id }
+    });
 
-    await post.populate('author', 'name profilePic');
+    await post.populate("author", "name profilePic");
 
-    res.status(201).json({ 
-      success: true, 
+    res.status(201).json({
+      success: true,
       msg: "Post created successfully",
-      post 
+      post,
     });
   } catch (err) {
-    if (req.file && req.file.filename) {
-      await cloudinary.uploader.destroy(req.file.filename);
-    }
-    
-    res.status(500).json({ 
+  if (publicId) {
+  await cloudinary.uploader.destroy(publicId);
+}
+
+
+    res.status(500).json({
       success: false,
-      msg: "Failed to create post", 
-      error: err.message 
+      msg: "Failed to create post",
+      error: err.message,
     });
   }
 };
+
 
 export const deletePost = async (req, res) => {
   try {
@@ -153,6 +158,25 @@ export const getPosts = async (req, res) => {
     });
   }
 };
+
+
+export const likePost = async (req, res) => {
+  const post = await Post.findById(req.params.postId);
+  if (!post) return res.status(404).json({ success: false });
+
+  const userId = req.user.id;
+
+  if (post.likedBy.includes(userId)) {
+    return res.status(400).json({ success: false, msg: "Already liked" });
+  }
+
+  post.likedBy.push(userId);
+  post.likes = post.likedBy.length;
+
+  await post.save();
+  res.json({ success: true, likes: post.likes });
+};
+
 
 export const purchasePost = async (req, res) => {
   try {
@@ -241,4 +265,24 @@ export const downloadPost = async (req, res) => {
       error: err.message 
     });
   }
+};
+
+
+export const addComment = async (req, res) => {
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ success: false });
+
+  const post = await Post.findById(req.params.postId);
+  if (!post) return res.status(404).json({ success: false });
+
+  post.comments.push({
+    user: req.user.id,
+    text,
+    createdAt: new Date(),
+  });
+
+  await post.save();
+  await post.populate("comments.user", "name profilePic");
+
+  res.json({ success: true, comments: post.comments });
 };

@@ -1,149 +1,164 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import React, { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Menu, X } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 const Header = () => {
   const { user, logout, isAuthenticated } = useAuth();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const navigate = useNavigate();
+
+  const profileRef = useRef(null);
 
   const handleLogout = async () => {
     await logout();
-    navigate('/');
+    navigate("/");
   };
 
-  return (
-    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
-          {/* LOGO */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold">PM</span>
+  return (
+    <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="h-16 flex items-center justify-between">
+
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow">
+              PM
             </div>
-            <span className="text-xl font-bold text-gray-900 hidden sm:block">
+            <span className="text-lg font-bold text-gray-900 hidden sm:block">
               PhotoMarket
             </span>
           </Link>
 
-          {/* DESKTOP MENU */}
-          <nav className="hidden md:flex items-center space-x-4">
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-6">
+            <NavLink to="/" label="Home" />
+            {isAuthenticated && <NavLink to="/dashboard" label="Dashboard" />}
 
-            {/* Home */}
-            <Link 
-              to="/" 
-              className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium"
-            >
-              Home
-            </Link>
-
-            {/* Dashboard */}
-            {isAuthenticated && (
-              <Link 
-                to="/dashboard" 
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium"
-              >
-                Dashboard
-              </Link>
-            )}
-
-            {/* User Dropdown */}
-            {isAuthenticated ? (
-              <div className="relative">
+            {!isAuthenticated ? (
+              <>
+                <NavLink to="/login" label="Login" />
+                <Link to="/signup" className="btn-primary">
+                  Get Started
+                </Link>
+              </>
+            ) : (
+              <div className="relative" ref={profileRef}>
                 <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2"
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-600 font-semibold flex items-center justify-center hover:ring-2 ring-indigo-300 transition"
                 >
-                  {user?.profilePic?.url ? (
-                    <img
-                      src={user.profilePic.url}
-                      className="w-8 h-8 rounded-full object-cover border"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-700">{user?.name?.charAt(0)}</span>
-                    </div>
-                  )}
+                  {user?.name?.charAt(0)}
                 </button>
 
-                {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg">
+                {profileOpen && (
+                  <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border animate-scaleIn overflow-hidden">
                     <Link
                       to="/profile"
-                      className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                      className="block px-4 py-3 text-sm hover:bg-gray-50"
                     >
                       Profile
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
+                      className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-gray-50"
                     >
-                      Sign Out
+                      Logout
                     </button>
                   </div>
                 )}
               </div>
-            ) : (
-              <>
-                <Link to="/login" className="text-gray-700 hover:text-gray-900">
-                  Login
-                </Link>
-                <Link 
-                  to="/signup"
-                  className="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700"
-                >
-                  Sign Up
-                </Link>
-              </>
             )}
           </nav>
 
-          {/* MOBILE MENU BUTTON */}
+          {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 text-gray-600"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition"
           >
-            {isMobileMenuOpen ? "✖" : "☰"}
+            {menuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
+      </div>
 
-        {/* MOBILE MENU */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden py-3 space-y-2 border-t">
-
-            <Link to="/" className="block px-3 py-2 text-gray-700">Home</Link>
+      {/* Mobile Menu */}
+      {menuOpen && (
+        <div className="md:hidden bg-white border-t animate-slideDown">
+          <div className="px-4 py-4 space-y-3">
+            <MobileLink to="/" onClick={() => setMenuOpen(false)}>
+              Home
+            </MobileLink>
 
             {isAuthenticated && (
-              <Link to="/dashboard" className="block px-3 py-2 text-gray-700">
+              <MobileLink to="/dashboard" onClick={() => setMenuOpen(false)}>
                 Dashboard
-              </Link>
+              </MobileLink>
             )}
 
             {!isAuthenticated ? (
               <>
-                <Link to="/login" className="block px-3 py-2 text-gray-700">Login</Link>
+                <MobileLink to="/login" onClick={() => setMenuOpen(false)}>
+                  Login
+                </MobileLink>
                 <Link
                   to="/signup"
-                  className="block px-3 py-2 bg-blue-600 text-white rounded-md"
+                  onClick={() => setMenuOpen(false)}
+                  className="block w-full text-center btn-primary"
                 >
-                  Sign Up
+                  Get Started
                 </Link>
               </>
             ) : (
-              <button
-                onClick={handleLogout}
-                className="block w-full text-left px-3 py-2 text-red-600"
-              >
-                Sign Out
-              </button>
+              <>
+                <MobileLink to="/profile" onClick={() => setMenuOpen(false)}>
+                  Profile
+                </MobileLink>
+                <button
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-3 rounded-lg text-red-600 hover:bg-red-50"
+                >
+                  Logout
+                </button>
+              </>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </header>
   );
 };
 
 export default Header;
+
+/* ---------------- Components ---------------- */
+
+const NavLink = ({ to, label }) => (
+  <Link
+    to={to}
+    className="relative text-sm font-medium text-gray-700 hover:text-gray-900 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-indigo-600 hover:after:w-full after:transition-all"
+  >
+    {label}
+  </Link>
+);
+
+const MobileLink = ({ to, children, onClick }) => (
+  <Link
+    to={to}
+    onClick={onClick}
+    className="block px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition"
+  >
+    {children}
+  </Link>
+);

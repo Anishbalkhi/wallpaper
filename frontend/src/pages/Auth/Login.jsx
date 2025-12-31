@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
@@ -77,7 +77,8 @@ const Login = () => {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <Link to="/" className="inline-flex items-center">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg"></div>
+           <div className="w-14 h-14 bg-indigo-600 rounded-2xl mx-auto mb-4" />
+
             <span className="ml-2 text-2xl font-bold text-gray-900">PhotoMarket</span>
           </Link>
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">

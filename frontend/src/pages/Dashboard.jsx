@@ -40,7 +40,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+   <div className="card p-6">
       {renderDashboard()}
     </div>
   );

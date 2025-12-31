@@ -13,6 +13,8 @@ const postSchema = new mongoose.Schema(
     price: { type: Number, default: 0 },
     category: { type: String },
     likes: { type: Number, default: 0 },
+    likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+
     comments: [
       {
         user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
