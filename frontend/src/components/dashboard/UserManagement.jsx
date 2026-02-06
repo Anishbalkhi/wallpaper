@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { userAPI } from '../../services/api.js';
 import RoleSelector from './RoleSelector.jsx';
 import { toast } from 'react-hot-toast';
@@ -27,13 +27,24 @@ const UserManagement = () => {
 
   const { user: currentUser } = useAuth();
 
-  const fetchUsers = useCallback(async () => {
+  const updateStats = (userList) => {
+    setStats({
+      total: userList.length,
+      admins: userList.filter(user => user.role === 'admin').length,
+      managers: userList.filter(user => user.role === 'manager').length,
+      users: userList.filter(user => user.role === 'user').length,
+      active: userList.filter(user => !user.suspended).length,
+      suspended: userList.filter(user => user.suspended).length
+    });
+  };
+
+  const fetchUsers = async () => {
     try {
       setLoading(true);
       setError('');
-      
+
       const response = await userAPI.getUsers();
-      
+
       if (response.data.success) {
         const usersData = response.data.users || [];
         setUsers(usersData);
@@ -47,37 +58,28 @@ const UserManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+  }, []);
 
-  const updateStats = (userList) => {
-    setStats({
-      total: userList.length,
-      admins: userList.filter(user => user.role === 'admin').length,
-      managers: userList.filter(user => user.role === 'manager').length,
-      users: userList.filter(user => user.role === 'user').length,
-      active: userList.filter(user => !user.suspended).length,
-      suspended: userList.filter(user => user.suspended).length
-    });
-  };
+
 
   const handleRoleChange = async (userId, newRole) => {
     setActionLoading(userId);
-    
+
     try {
       const response = await userAPI.updateUserRole(userId, newRole);
-      
+
       if (response.data.success) {
         // Update local state
-        const updatedUsers = users.map(user => 
+        const updatedUsers = users.map(user =>
           user._id === userId ? { ...user, role: newRole } : user
         );
         setUsers(updatedUsers);
         updateStats(updatedUsers);
-        
+
         toast.success(`✅ User role updated to ${newRole}`);
       } else {
         toast.error(response.data.msg || 'Failed to update role');
@@ -92,19 +94,19 @@ const UserManagement = () => {
 
   const handleQuickRoleChange = async (userId, newRole) => {
     if (actionLoading) return;
-    
+
     setActionLoading(userId);
-    
+
     try {
       const response = await userAPI.updateUserRole(userId, newRole);
-      
+
       if (response.data.success) {
-        const updatedUsers = users.map(user => 
+        const updatedUsers = users.map(user =>
           user._id === userId ? { ...user, role: newRole } : user
         );
         setUsers(updatedUsers);
         updateStats(updatedUsers);
-        
+
         toast.success(`✅ User role changed to ${newRole}`);
       }
     } catch (err) {
@@ -117,17 +119,17 @@ const UserManagement = () => {
 
   const handleSuspendUser = async (userId, suspend = true) => {
     setActionLoading(`suspend_${userId}`);
-    
+
     try {
       const response = await userAPI.updateUserStatus(userId, { suspended: suspend });
-      
+
       if (response.data.success) {
-        const updatedUsers = users.map(user => 
+        const updatedUsers = users.map(user =>
           user._id === userId ? { ...user, suspended: suspend } : user
         );
         setUsers(updatedUsers);
         updateStats(updatedUsers);
-        
+
         toast.success(`✅ User ${suspend ? 'suspended' : 'activated'} successfully`);
       }
     } catch (err) {
@@ -144,15 +146,15 @@ const UserManagement = () => {
     }
 
     setActionLoading(`delete_${userId}`);
-    
+
     try {
       const response = await userAPI.deleteUser(userId);
-      
+
       if (response.data.success) {
         const updatedUsers = users.filter(user => user._id !== userId);
         setUsers(updatedUsers);
         updateStats(updatedUsers);
-        
+
         toast.success('✅ User deleted successfully');
       }
     } catch (err) {
@@ -165,15 +167,15 @@ const UserManagement = () => {
 
   // Filter and search users
   const filteredUsers = users.filter(user => {
-    const matchesSearch = 
+    const matchesSearch =
       user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    const matchesStatus = statusFilter === 'all' || 
+    const matchesStatus = statusFilter === 'all' ||
       (statusFilter === 'active' && !user.suspended) ||
       (statusFilter === 'suspended' && user.suspended);
-    
+
     return matchesSearch && matchesRole && matchesStatus;
   });
 
@@ -188,37 +190,37 @@ const UserManagement = () => {
     if (!bulkAction || selectedUsers.length === 0) return;
 
     setActionLoading('bulk');
-    
+
     try {
       let message = '';
-      
+
       switch (bulkAction) {
         case 'make_admin':
-          await Promise.all(selectedUsers.map(userId => 
+          await Promise.all(selectedUsers.map(userId =>
             userAPI.updateUserRole(userId, 'admin')
           ));
           message = 'Selected users promoted to admin';
           break;
         case 'make_manager':
-          await Promise.all(selectedUsers.map(userId => 
+          await Promise.all(selectedUsers.map(userId =>
             userAPI.updateUserRole(userId, 'manager')
           ));
           message = 'Selected users promoted to manager';
           break;
         case 'make_user':
-          await Promise.all(selectedUsers.map(userId => 
+          await Promise.all(selectedUsers.map(userId =>
             userAPI.updateUserRole(userId, 'user')
           ));
           message = 'Selected users set as regular users';
           break;
         case 'suspend':
-          await Promise.all(selectedUsers.map(userId => 
+          await Promise.all(selectedUsers.map(userId =>
             userAPI.updateUserStatus(userId, { suspended: true })
           ));
           message = 'Selected users suspended';
           break;
         case 'activate':
-          await Promise.all(selectedUsers.map(userId => 
+          await Promise.all(selectedUsers.map(userId =>
             userAPI.updateUserStatus(userId, { suspended: false })
           ));
           message = 'Selected users activated';
@@ -241,8 +243,8 @@ const UserManagement = () => {
   };
 
   const toggleUserSelection = (userId) => {
-    setSelectedUsers(prev => 
-      prev.includes(userId) 
+    setSelectedUsers(prev =>
+      prev.includes(userId)
         ? prev.filter(id => id !== userId)
         : [...prev, userId]
     );
@@ -271,9 +273,9 @@ const UserManagement = () => {
       manager: { color: 'bg-yellow-100 text-yellow-800', label: 'Manager' },
       user: { color: 'bg-green-100 text-green-800', label: 'User' }
     };
-    
+
     const config = roleConfig[role] || { color: 'bg-gray-100 text-gray-800', label: role };
-    
+
     return (
       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${config.color}`}>
         {config.label}
@@ -587,11 +589,10 @@ const UserManagement = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.suspended 
-                        ? 'bg-red-100 text-red-800' 
-                        : 'bg-green-100 text-green-800'
-                    }`}>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.suspended
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-green-100 text-green-800'
+                      }`}>
                       {user.suspended ? 'Suspended' : 'Active'}
                     </span>
                   </td>
@@ -670,8 +671,8 @@ const UserManagement = () => {
             </svg>
             <h3 className="mt-2 text-sm font-medium text-gray-900">No users found</h3>
             <p className="mt-1 text-sm text-gray-500">
-              {searchTerm || roleFilter !== 'all' || statusFilter !== 'all' 
-                ? 'Try adjusting your search terms or filters' 
+              {searchTerm || roleFilter !== 'all' || statusFilter !== 'all'
+                ? 'Try adjusting your search terms or filters'
                 : 'No users in the system'}
             </p>
           </div>

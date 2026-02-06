@@ -1,5 +1,5 @@
 // src/context/AuthProvider.jsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "../services/api";
 import { AuthContext } from "./AuthContext";
 
@@ -9,25 +9,24 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState("");
 
   // load user from server using httpOnly cookie (no token in localStorage)
-  const loadUser = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get("/users/me");
-      if (res.data?.success) {
-        setUser(res.data.user);
-      } else {
-        setUser(null);
-      }
-    } catch (err) {
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
+    const loadUser = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get("/users/me");
+        if (res.data?.success) {
+          setUser(res.data.user);
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
     loadUser();
-  }, [loadUser]);
+  }, []);
 
   const login = async (email, password) => {
     try {

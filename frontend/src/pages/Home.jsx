@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -13,22 +13,21 @@ const Home = () => {
   const [originalPosts, setOriginalPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchPosts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await postAPI.getPosts({ page: 1, limit: 1000 });
-      if (res.data?.success) {
-        setPosts(res.data.posts);
-        setOriginalPosts(res.data.posts);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const res = await postAPI.getPosts({ page: 1, limit: 1000 });
+        if (res.data?.success) {
+          setPosts(res.data.posts);
+          setOriginalPosts(res.data.posts);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchPosts();
-  }, [fetchPosts]);
+  }, []);
 
   /* SORTING BASED ON MODEL */
   const sortLatest = () =>
