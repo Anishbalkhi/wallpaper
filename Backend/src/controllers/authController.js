@@ -10,6 +10,23 @@ const createToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "24h" });
 };
 
+// Helper: Cookie options (DRY principle)
+const getCookieOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "strict",
+  maxAge: 24 * 60 * 60 * 1000,
+});
+
+// Helper: Format user response (DRY principle)
+const formatUserResponse = (user) => ({
+  id: user._id.toString(),
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  profilePic: user.profilePic || null,
+});
+
 export const Signup = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -27,24 +44,13 @@ export const Signup = async (req, res) => {
     const newUser = await User.create({ name, email, password: hashed, role: "user" });
 
     const token = createToken(newUser._id);
-    // set cookie
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000,
-    };
-    res.cookie("token", token, cookieOptions);
+    res.cookie("token", token, getCookieOptions());
 
-    const userResponse = {
-      id: newUser._id.toString(),
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
-      profilePic: newUser.profilePic || null,
-    };
-
-    res.status(201).json({ success: true, msg: "User created successfully", user: userResponse });
+    res.status(201).json({ 
+      success: true, 
+      msg: "User created successfully", 
+      user: formatUserResponse(newUser) 
+    });
   } catch (err) {
     console.error("Signup Error:", err);
     res.status(500).json({ success: false, msg: "Signup failed", error: err.message });
@@ -54,32 +60,28 @@ export const Signup = async (req, res) => {
 export const Login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ success: false, msg: "Email and password are required" });
+    if (!email || !password) {
+      return res.status(400).json({ success: false, msg: "Email and password are required" });
+    }
 
     const user = await User.findOne({ email }).select("+password");
-    if (!user) return res.status(400).json({ success: false, msg: "Invalid credentials" });
+    if (!user) {
+      return res.status(400).json({ success: false, msg: "Invalid credentials" });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ success: false, msg: "Invalid credentials" });
+    if (!isMatch) {
+      return res.status(400).json({ success: false, msg: "Invalid credentials" });
+    }
 
     const token = createToken(user._id);
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 24 * 60 * 60 * 1000,
-    };
-    res.cookie("token", token, cookieOptions);
+    res.cookie("token", token, getCookieOptions());
 
-    const userResponse = {
-      id: user._id.toString(),
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      profilePic: user.profilePic || null,
-    };
-
-    res.status(200).json({ success: true, msg: "Login successful", user: userResponse });
+    res.status(200).json({ 
+      success: true, 
+      msg: "Login successful", 
+      user: formatUserResponse(user) 
+    });
   } catch (err) {
     console.error("Login Error:", err);
     res.status(500).json({ success: false, msg: "Login failed", error: err.message });
@@ -87,14 +89,9 @@ export const Login = async (req, res) => {
 };
 
 export const Logout = (req, res) => {
-  try {
-    res.clearCookie("token", {
-      httpOnly: true,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-    });
-    res.status(200).json({ success: true, msg: "Logout successful" });
-  } catch (err) {
-    res.status(500).json({ success: false, msg: "Logout failed", error: err.message });
-  }
+  const cookieOptions = getCookieOptions();
+  // Remove maxAge when clearing cookie
+  const { maxAge, ...clearOptions } = cookieOptions;
+  res.clearCookie("token", clearOptions);
+  res.status(200).json({ success: true, msg: "Logout successful" });
 };

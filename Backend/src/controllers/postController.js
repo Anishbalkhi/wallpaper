@@ -6,7 +6,7 @@ export const uploadProfilePic = async (req, res) => {
   try {
     // multer + cloudinary storage will set req.file.path or req.file.filename depending on storage
     // In multer-storage-cloudinary, file.path is usually the secure_url
-    const userId = req.user.id;
+    const userId = req.user._id;
     if (!req.file) {
       return res.status(400).json({ success: false, msg: "No file uploaded" });
     }
@@ -47,7 +47,7 @@ export const createPost = async (req, res) => {
 
     const post = await Post.create({
       title,
-      author: req.user.id,
+      author: req.user._id,
       image: imageUrl,
       publicId,
       price: Number(price),
@@ -55,7 +55,7 @@ export const createPost = async (req, res) => {
       tags: tags ? tags.split(",").map(t => t.trim()) : [],
     });
 
-    await User.findByIdAndUpdate(req.user.id, {
+    await User.findByIdAndUpdate(req.user._id, {
       $push: { posts: post._id }
     });
 
@@ -67,10 +67,11 @@ export const createPost = async (req, res) => {
       post,
     });
   } catch (err) {
-  if (publicId) {
-  await cloudinary.uploader.destroy(publicId);
-}
-
+    // Cleanup cloudinary upload if post creation fails
+    const publicId = req.file?.filename || req.file?.public_id;
+    if (publicId) {
+      await cloudinary.uploader.destroy(publicId).catch(() => {});
+    }
 
     res.status(500).json({
       success: false,
@@ -93,7 +94,7 @@ export const deletePost = async (req, res) => {
       });
     }
 
-    if (req.user.role !== "admin" && post.author.toString() !== req.user.id) {
+    if (req.user.role !== "admin" && post.author.toString() !== req.user._id.toString()) {
       return res.status(403).json({ 
         success: false,
         msg: "Not authorized to delete this post" 
@@ -164,7 +165,7 @@ export const likePost = async (req, res) => {
   const post = await Post.findById(req.params.postId);
   if (!post) return res.status(404).json({ success: false });
 
-  const userId = req.user.id;
+  const userId = req.user._id;
 
   if (post.likedBy.includes(userId)) {
     return res.status(400).json({ success: false, msg: "Already liked" });
@@ -195,7 +196,7 @@ export const purchasePost = async (req, res) => {
       });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user._id);
     const alreadyPurchased = user.purchases.some(
       p => p.post.toString() === post._id.toString()
     );
@@ -207,7 +208,7 @@ export const purchasePost = async (req, res) => {
       });
     }
 
-    await User.findByIdAndUpdate(req.user.id, {
+    await User.findByIdAndUpdate(req.user._id, {
       $push: { 
         purchases: { 
           post: post._id, 
@@ -242,7 +243,7 @@ export const downloadPost = async (req, res) => {
     }
 
     if (post.price > 0) {
-      const user = await User.findById(req.user.id);
+      const user = await User.findById(req.user._id);
       const purchased = user.purchases.some(
         p => p.post.toString() === post._id.toString()
       );
@@ -276,7 +277,7 @@ export const addComment = async (req, res) => {
   if (!post) return res.status(404).json({ success: false });
 
   post.comments.push({
-    user: req.user.id,
+    user: req.user._id,
     text,
     createdAt: new Date(),
   });

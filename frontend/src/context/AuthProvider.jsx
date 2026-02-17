@@ -9,22 +9,23 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState("");
 
   // load user from server using httpOnly cookie (no token in localStorage)
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        setLoading(true);
-        const res = await axios.get("/users/me");
-        if (res.data?.success) {
-          setUser(res.data.user);
-        } else {
-          setUser(null);
-        }
-      } catch (err) {
+  const loadUser = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get("/users/me");
+      if (res.data?.success) {
+        setUser(res.data.user);
+      } else {
         setUser(null);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadUser();
   }, []);
 

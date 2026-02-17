@@ -18,42 +18,9 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-export const adminController = async (req, res) => {
-  try {
-    const users = await User.find().select("-password");
-    res.status(200).json({ 
-      success: true,
-      msg: "Admin access granted", 
-      users,
-      userCount: users.length 
-    });
-  } catch (err) {
-    res.status(500).json({ 
-      success: false,
-      msg: "Admin access failed", 
-      error: err.message 
-    });
-  }
-};
-
-export const managerController = (req, res) => {
-  res.status(200).json({ 
-    success: true,
-    msg: "Manager access granted" 
-  });
-};
-
-export const userController = (req, res) => {
-  res.status(200).json({ 
-    success: true,
-    msg: "User access granted",
-    user: req.user 
-  });
-};
-
 export const getMyProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user._id).select("-password");
     if (!user) {
       return res.status(404).json({ 
         success: false,
@@ -87,7 +54,7 @@ export const updateUserRole = async (req, res) => {
     }
 
 
-if (req.user.role === "admin" && id === req.user.id.toString() && role !== "admin") {
+if (req.user.role === "admin" && id === req.user._id.toString() && role !== "admin") {
   return res.status(400).json({
     success: false,
     msg: "Admins cannot demote themselves. Ask another admin to change your role."
@@ -163,7 +130,7 @@ export const deleteUser = async (req, res) => {
       });
     }
 
-    if (user._id.toString() === req.user.id) {
+    if (user._id.toString() === req.user._id.toString()) {
       return res.status(400).json({ 
         success: false,
         msg: "Cannot delete your own account" 
