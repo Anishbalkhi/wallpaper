@@ -1,6 +1,6 @@
-# Wallpaper Sharing Platform
+# PhotoMarket - Digital Photography Marketplace
 
-A full-stack web application for sharing and discovering wallpapers, built with React and Express.js. Users can create accounts, upload wallpapers via Cloudinary, manage their profiles, and explore content from other users.
+A full-stack web application for buying, selling, and discovering high-quality photos/wallpapers. Built with React and Express.js. Users can create accounts, upload their work, track sales in real-time, and manage their professional portfolios.
 
 ## ✨ Features
 
@@ -12,15 +12,18 @@ A full-stack web application for sharing and discovering wallpapers, built with 
 
 ### User Management
 - **User Profiles** with avatar upload support
-- **Profile Editing** capabilities
-- **User Dashboard** with personalized content
+- **Profile Editing** (Name, Bio, Social Links)
+- **User Dashboard** with specific widgets:
+    - **Sales Analytics**: Track earnings and sales growth.
+    - **Recent Uploads**: Manage uploaded content.
+    - **Quick Stats**: At-a-glance metrics.
 - **Admin Dashboard** for user management (admin-only)
 
-### Wallpaper Management
-- **Upload Wallpapers** with Cloudinary integration
-- **Create Posts** with image upload functionality
-- **Browse Wallpapers** on the home page
-- **User-specific Content** management
+### Marketplace & Content
+- **Buy & Sell**: Users can purchase photos, and sellers earn money.
+- **Upload Wallpapers** with price setting.
+- **Browse & Discovery**: Filter by category, tags, and authors.
+- **Secure Transactions**: Mock payment flow integrated for demonstration.
 
 ### UI/UX
 - **Modern, Premium Design** with glassmorphism effects

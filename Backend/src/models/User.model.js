@@ -22,6 +22,11 @@ const userSchema = new mongoose.Schema(
     },
     profilePic: { url: String, publicId: String },
     bio: { type: String, maxlength: 200 },
+    location: { type: String, maxlength: 100 },
+    phone: { type: String, maxlength: 20 },
+    website: { type: String, maxlength: 200 },
+    instagram: { type: String, maxlength: 50 },
+    twitter: { type: String, maxlength: 50 },
     posts: [{ type: mongoose.Schema.Types.ObjectId, ref: "Post" }],
     saved: [{ type: mongoose.Schema.Types.ObjectId, ref: "Post" }],
     purchases: [
@@ -34,6 +39,8 @@ const userSchema = new mongoose.Schema(
         purchasedAt: Date,
       },
     ],
+    earnings: { type: Number, default: 0 },
+    totalSales: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

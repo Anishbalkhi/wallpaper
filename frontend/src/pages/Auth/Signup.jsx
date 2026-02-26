@@ -154,8 +154,8 @@ const Signup = () => {
                   value={formData.name}
                   onChange={handleChange}
                   className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 ${errors.name
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                      : 'border-gray-200 focus:border-purple-500 focus:ring-purple-500'
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                    : 'border-gray-200 focus:border-purple-500 focus:ring-purple-500'
                     } focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all duration-200 bg-gray-50 hover:bg-white`}
                   placeholder="John Doe"
                 />
@@ -182,8 +182,8 @@ const Signup = () => {
                   value={formData.email}
                   onChange={handleChange}
                   className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 ${errors.email
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                      : 'border-gray-200 focus:border-purple-500 focus:ring-purple-500'
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                    : 'border-gray-200 focus:border-purple-500 focus:ring-purple-500'
                     } focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all duration-200 bg-gray-50 hover:bg-white`}
                   placeholder="you@example.com"
                 />
@@ -210,8 +210,8 @@ const Signup = () => {
                   value={formData.password}
                   onChange={handleChange}
                   className={`w-full pl-12 pr-12 py-3.5 rounded-xl border-2 ${errors.password
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                      : 'border-gray-200 focus:border-purple-500 focus:ring-purple-500'
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                    : 'border-gray-200 focus:border-purple-500 focus:ring-purple-500'
                     } focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all duration-200 bg-gray-50 hover:bg-white`}
                   placeholder="Create a strong password"
                 />
@@ -262,8 +262,8 @@ const Signup = () => {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   className={`w-full pl-12 pr-12 py-3.5 rounded-xl border-2 ${errors.confirmPassword
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                      : 'border-gray-200 focus:border-purple-500 focus:ring-purple-500'
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                    : 'border-gray-200 focus:border-purple-500 focus:ring-purple-500'
                     } focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all duration-200 bg-gray-50 hover:bg-white`}
                   placeholder="Confirm your password"
                 />
@@ -320,10 +320,7 @@ const Signup = () => {
         {/* Footer */}
         <div className="mt-6 text-center">
           <p className="text-xs text-white/80">
-            By signing up, you agree to our{' '}
-            <a href="#" className="font-semibold hover:underline">Terms</a>
-            {' '}and{' '}
-            <a href="#" className="font-semibold hover:underline">Privacy Policy</a>
+            By signing up, you agree to our Terms and Privacy Policy.
           </p>
         </div>
       </div>

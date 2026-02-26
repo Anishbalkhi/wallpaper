@@ -1,17 +1,13 @@
 import React, { useState, useRef } from 'react';
-import { useAuth } from '../context/AuthContext';
 
 const ImageUpload = ({ onUploadComplete, currentImage }) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(currentImage);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(currentImage || null);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState('');
-  
-  const fileInputRef = useRef(null);
 
-  const { user } = useAuth();
+  const fileInputRef = useRef(null);
 
   const handleDragEnter = (e) => {
     e.preventDefault();
@@ -34,7 +30,6 @@ const ImageUpload = ({ onUploadComplete, currentImage }) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       handleFileSelect(files[0]);
@@ -54,68 +49,53 @@ const ImageUpload = ({ onUploadComplete, currentImage }) => {
     }
 
     setError('');
-    setSelectedImage(file);
+    setSelectedFile(file);
 
     const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreviewUrl(e.target.result);
-    };
+    reader.onload = (e) => setPreviewUrl(e.target.result);
     reader.readAsDataURL(file);
   };
 
   const handleFileInputChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      handleFileSelect(file);
-    }
+    if (file) handleFileSelect(file);
   };
 
-  const simulateUpload = async () => {
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+
     setIsUploading(true);
-    setUploadProgress(0);
+    setError('');
 
-    for (let i = 0; i <= 100; i += 10) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      setUploadProgress(i);
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const mockCloudinaryResponse = {
-      url: previewUrl,
-      publicId: `profile_${user?._id || user?.id || 'user'}_${Date.now()}`,
-      format: selectedImage.type.split('/')[1]
-    };
-
-    setIsUploading(false);
-    setUploadProgress(0);
-    
-    if (onUploadComplete) {
-      onUploadComplete(mockCloudinaryResponse);
+    try {
+      // Pass the actual file to the parent — AuthProvider's updateProfilePicture
+      // sends it to POST /users/upload-profile-pic as multipart/form-data
+      if (onUploadComplete) {
+        await onUploadComplete(selectedFile);
+      }
+    } catch (err) {
+      setError('Upload failed. Please try again.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const removeImage = () => {
-    setSelectedImage(null);
-    setPreviewUrl(currentImage);
+    setSelectedFile(null);
+    setPreviewUrl(currentImage || null);
     setError('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
-  };
-
   return (
     <div className="w-full max-w-md mx-auto">
       <div
-        className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 ${
-          isDragging
+        className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-200 ${isDragging
             ? 'border-blue-500 bg-blue-50'
             : 'border-gray-300 hover:border-gray-400'
-        } ${isUploading ? 'opacity-50' : ''}`}
+          } ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -129,7 +109,7 @@ const ImageUpload = ({ onUploadComplete, currentImage }) => {
                 alt="Profile preview"
                 className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
               />
-              {selectedImage && (
+              {selectedFile && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
                   <span className="text-white text-sm font-medium">New</span>
                 </div>
@@ -146,23 +126,19 @@ const ImageUpload = ({ onUploadComplete, currentImage }) => {
               </svg>
             </div>
             <p className="text-gray-600 mb-2">
-              <span className="font-medium text-blue-600">Click to upload</span> or drag and drop
+              <span className="font-medium text-blue-600 cursor-pointer" onClick={() => fileInputRef.current?.click()}>Click to upload</span> or drag and drop
             </p>
             <p className="text-sm text-gray-500">PNG, JPG, GIF up to 5MB</p>
           </div>
         )}
 
         {isUploading && (
-          <div className="mt-4">
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
-              ></div>
-            </div>
-            <p className="text-sm text-gray-600 mt-2">
-              Uploading... {uploadProgress}%
-            </p>
+          <div className="mt-4 flex items-center justify-center gap-2">
+            <svg className="animate-spin h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="text-sm text-blue-600 font-medium">Uploading...</p>
           </div>
         )}
 
@@ -173,40 +149,31 @@ const ImageUpload = ({ onUploadComplete, currentImage }) => {
         )}
 
         <div className="mt-4 flex flex-col sm:flex-row gap-2 justify-center">
-          {!selectedImage && !isUploading && (
+          {!selectedFile && !isUploading && (
             <>
               <button
                 type="button"
-                onClick={triggerFileInput}
-                className="btn-primary text-sm py-2 px-4"
+                onClick={() => fileInputRef.current?.click()}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
               >
                 Choose Image
               </button>
-              {previewUrl && (
-                <button
-                  type="button"
-                  onClick={removeImage}
-                  className="btn-secondary text-sm py-2 px-4"
-                >
-                  Remove
-                </button>
-              )}
             </>
           )}
 
-          {selectedImage && !isUploading && (
+          {selectedFile && !isUploading && (
             <>
               <button
                 type="button"
-                onClick={simulateUpload}
-                className="btn-primary text-sm py-2 px-4"
+                onClick={handleUpload}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
               >
                 Upload Picture
               </button>
               <button
                 type="button"
                 onClick={removeImage}
-                className="btn-secondary text-sm py-2 px-4"
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
               >
                 Cancel
               </button>

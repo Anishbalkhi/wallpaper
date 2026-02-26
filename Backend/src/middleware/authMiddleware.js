@@ -15,6 +15,11 @@ export const verifyToken = async (req, res, next) => {
     const user = await User.findById(decoded.id).select("-password");
     if (!user) return res.status(401).json({ success: false, msg: "User not found" });
 
+    // BUG 5 FIX: Block suspended users even if they have a valid cookie
+    if (user.suspended) {
+      return res.status(403).json({ success: false, msg: "Your account has been suspended. Please contact support." });
+    }
+
     req.user = user;
     next();
   } catch (err) {

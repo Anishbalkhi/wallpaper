@@ -127,14 +127,24 @@ export const deletePost = async (req, res) => {
 
 export const getPosts = async (req, res) => {
   try {
-    const { page = 1, limit = 10, category, tags } = req.query;
+    const { page = 1, limit = 10, category, tags, sortBy = 'createdAt', order = 'desc', minPrice, maxPrice } = req.query;
     const query = {};
     
     if (category) query.category = category;
     if (tags) query.tags = { $in: tags.split(",").map(tag => tag.trim()) };
+    if (req.query.author) query.author = req.query.author;
+    
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      query.price = {};
+      if (minPrice !== undefined) query.price.$gte = Number(minPrice);
+      if (maxPrice !== undefined) query.price.$lte = Number(maxPrice);
+    }
+
+    const sortOptions = {};
+    sortOptions[sortBy] = order === 'asc' ? 1 : -1;
 
     const posts = await Post.find(query)
-      .sort({ createdAt: -1 })
+      .sort(sortOptions)
       .skip((page - 1) * limit)
       .limit(Number(limit))
       .populate("author", "name profilePic");
@@ -216,6 +226,15 @@ export const purchasePost = async (req, res) => {
           purchasedAt: new Date()
         } 
       },
+    });
+
+    // Update Post Sales Count
+    post.sales = (post.sales || 0) + 1;
+    await post.save();
+
+    // Update Author Earnings
+    await User.findByIdAndUpdate(post.author, {
+      $inc: { earnings: post.price, totalSales: 1 }
     });
 
     res.status(200).json({ 

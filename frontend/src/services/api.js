@@ -8,20 +8,17 @@ const api = axios.create({
   withCredentials: true,
 });
 
-
 // Do NOT add Authorization header from localStorage here.
 // Backend validates cookie. If you later support Bearer tokens, do it explicitly.
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // central 401 handling: if backend returns 401, redirect to login
+    // BUG 1 FIX: Dispatch a custom event instead of hard redirect.
+    // AuthProvider listens to this and uses React Router's navigate() for a
+    // graceful redirect — no full-page reload.
     if (error.response?.status === 401) {
-      // Optionally: you could use an event emitter or store
-      // For simplicity, redirect to login page:
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
+      window.dispatchEvent(new Event("auth:unauthorized"));
     }
     return Promise.reject(error);
   }
@@ -40,6 +37,8 @@ export const userAPI = {
   updateUserStatus: (userId, statusObj) => api.put(`/users/${userId}/status`, statusObj),
   deleteUser: (userId) => api.delete(`/users/${userId}`),
   getUserStats: () => api.get("/users/admin/stats"),
+  // BUG 3 FIX: Update own profile (name, bio)
+  updateMyProfile: (data) => api.put("/users/me", data),
 };
 
 export const postAPI = {

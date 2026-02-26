@@ -1,284 +1,161 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-
-// Icon components for better maintainability
-const Icons = {
-  Document: ({ className = "w-6 h-6" }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    </svg>
-  ),
-  Warning: ({ className = "w-6 h-6" }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
-    </svg>
-  ),
-  Users: ({ className = "w-6 h-6" }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-    </svg>
-  ),
-  Revenue: ({ className = "w-6 h-6" }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-    </svg>
-  ),
-  Shield: ({ className = "w-5 h-5" }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-    </svg>
-  ),
-  Chart: ({ className = "w-5 h-5" }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-    </svg>
-  ),
-  UserManagement: ({ className = "w-5 h-5" }) => (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-    </svg>
-  )
-};
-
-// Reusable Stat Card Component
-const StatCard = ({ icon, title, value, color = "blue" }) => {
-  const IconComponent = icon;
-  const colorClasses = {
-    blue: { bg: "bg-blue-100", text: "text-blue-600" },
-    red: { bg: "bg-red-100", text: "text-red-600" },
-    green: { bg: "bg-green-100", text: "text-green-600" },
-    purple: { bg: "bg-purple-100", text: "text-purple-600" }
-  };
-
-  const { bg, text } = colorClasses[color] || colorClasses.blue;
-
-  return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border">
-      <div className="flex items-center">
-        <div className={`p-3 ${bg} rounded-lg`}>
-          <IconComponent className={`w-6 h-6 ${text}`} />
-        </div>
-        <div className="ml-4">
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Approval Item Component
-const ApprovalItem = ({ id, onApprove, onReject }) => (
-  <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-    <div className="flex items-center space-x-3">
-      <div className="w-10 h-10 bg-gray-300 rounded-lg flex-shrink-0" aria-hidden="true" />
-      <div>
-        <p className="font-medium text-gray-900">Photo by User{id}</p>
-        <p className="text-sm text-gray-500">Uploaded 2 hours ago</p>
-      </div>
-    </div>
-    <div className="flex space-x-2">
-      <button 
-        onClick={() => onApprove(id)}
-        className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-        aria-label={`Approve item ${id}`}
-      >
-        Approve
-      </button>
-      <button 
-        onClick={() => onReject(id)}
-        className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-        aria-label={`Reject item ${id}`}
-      >
-        Reject
-      </button>
-    </div>
-  </div>
-);
-
-const ReportItem = ({ id }) => (
-  <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg bg-red-50">
-    <div className="flex items-center space-x-3">
-      <div className="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center flex-shrink-0">
-        <Icons.Warning className="w-5 h-5 text-red-600" />
-      </div>
-      <div>
-        <p className="font-medium text-gray-900">Report #{id} - Inappropriate Content</p>
-        <p className="text-sm text-gray-500">Reported by user • 1 hour ago</p>
-      </div>
-    </div>
-    <button 
-      className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-      aria-label={`Review report ${id}`}
-    >
-      Review
-    </button>
-  </div>
-);
-
-const ManagerAction = ({ icon, label, onClick }) => {
-  const IconComponent = icon;
-  return (
-  <button 
-    onClick={onClick}
-    className="w-full text-left p-4 border border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-  >
-    <div className="flex items-center">
-      <IconComponent className="w-5 h-5 text-purple-400 mr-3" />
-      <span className="font-medium">{label}</span>
-    </div>
-  </button>
-  );
-};
+import { postAPI } from '../../services/api';
+import Loader from '../ui/Loader';
+import { Image, Upload, DollarSign, ShoppingBag, Eye } from 'lucide-react';
 
 const ManagerDashboard = () => {
   const { user } = useAuth();
-  const [pendingApprovals, setPendingApprovals] = useState(5);
-  const [reportedContent] = useState(3);
+  const [posts, setPosts] = useState([]);
+  const [totalPosts, setTotalPosts] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const handleApprove = (id) => {
-    setPendingApprovals(prev => prev - 1);
-    // TODO: Implement actual approval logic
-  };
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const res = await postAPI.getPosts({ limit: 10, sortBy: 'createdAt', order: 'desc' });
+        if (res.data?.success) {
+          setPosts(res.data.posts || []);
+          setTotalPosts(res.data.pagination?.total || res.data.posts?.length || 0);
+        }
+      } catch (err) {
+        console.error("Failed to fetch posts:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPosts();
+  }, []);
 
-  const handleReject = (id) => {
-    setPendingApprovals(prev => prev - 1);
-    // TODO: Implement actual rejection logic
-  };
-
-  const handleManagerAction = (action) => {
-    // TODO: Implement manager action logic
-  };
-
-  const managerActions = [
-    { 
-      icon: Icons.Shield, 
-      label: "Content Moderation", 
-      onClick: () => handleManagerAction("Content Moderation") 
-    },
-    { 
-      icon: Icons.Chart, 
-      label: "Platform Analytics", 
-      onClick: () => handleManagerAction("Platform Analytics") 
-    },
-    { 
-      icon: Icons.UserManagement, 
-      label: "User Management", 
-      onClick: () => handleManagerAction("User Management") 
-    }
-  ];
-
-  const statsData = [
-    { icon: Icons.Document, title: "Pending Approvals", value: pendingApprovals, color: "blue" },
-    { icon: Icons.Warning, title: "Reported Content", value: reportedContent, color: "red" },
-    { icon: Icons.Users, title: "Total Users", value: "1,247", color: "green" },
-    { icon: Icons.Revenue, title: "Revenue", value: "$12,458", color: "purple" }
+  const stats = [
+    { icon: Image, label: 'Platform Posts', value: totalPosts, bg: 'bg-blue-50', text: 'text-blue-600' },
+    { icon: Upload, label: 'Your Uploads', value: user?.posts?.length || 0, bg: 'bg-emerald-50', text: 'text-emerald-600' },
+    { icon: ShoppingBag, label: 'Your Sales', value: user?.totalSales || 0, bg: 'bg-purple-50', text: 'text-purple-600' },
+    { icon: DollarSign, label: 'Your Earnings', value: `$${(user?.earnings || 0).toFixed(2)}`, bg: 'bg-amber-50', text: 'text-amber-600' },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <section className="bg-white rounded-lg shadow-sm border p-6" aria-labelledby="dashboard-heading">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="flex items-center space-x-2 mb-2">
-              <h1 id="dashboard-heading" className="text-3xl font-bold text-gray-900">
-                Manager Dashboard
-              </h1>
-              <span className="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                Manager
-              </span>
+    <div className="max-w-[1600px] mx-auto space-y-6 animate-fadeUp">
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-purple-600 via-violet-600 to-indigo-600 rounded-2xl p-8 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/4"></div>
+        <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/4"></div>
+        <div className="relative z-10">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-2xl font-bold">Manager Dashboard</h1>
+                <span className="bg-white/20 text-white text-xs font-bold px-3 py-1 rounded-full backdrop-blur-sm">
+                  Manager
+                </span>
+              </div>
+              <p className="text-white/80 text-sm">
+                Welcome back, <span className="font-semibold text-white">{user?.name || 'Manager'}</span>. Review and manage content across the platform.
+              </p>
             </div>
-            <p className="text-gray-600">
-              Welcome, {user?.name || 'Manager'}. Manage content moderation and platform oversight.
-            </p>
-          </div>
-          <div className="mt-4 md:mt-0 flex space-x-3">
-            <Link 
-              to="/profile" 
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-            >
-              View Profile
-            </Link>
-            <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
-              Platform Analytics
-            </button>
+            <div className="flex gap-3 self-start">
+              <Link
+                to="/profile"
+                className="px-5 py-2.5 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all duration-200 text-sm font-medium border border-white/20"
+              >
+                View Profile
+              </Link>
+              <Link
+                to="/post/create"
+                className="px-5 py-2.5 bg-white text-purple-700 rounded-xl hover:bg-white/90 transition-all duration-200 text-sm font-bold shadow-sm flex items-center gap-2"
+              >
+                <Upload size={15} />
+                Upload Photo
+              </Link>
+            </div>
           </div>
         </div>
-      </section>
-
-      {/* Manager Stats Grid */}
-      <section aria-labelledby="stats-heading">
-        <h2 id="stats-heading" className="sr-only">Platform Statistics</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {statsData.map((stat, index) => (
-            <StatCard
-              key={`stat-${index}`}
-              icon={stat.icon}
-              title={stat.title}
-              value={stat.value}
-              color={stat.color}
-            />
-          ))}
-        </div>
-      </section>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pending Approvals */}
-        <section className="bg-white rounded-lg shadow-sm border p-6" aria-labelledby="pending-approvals-heading">
-          <div className="flex justify-between items-center mb-4">
-            <h2 id="pending-approvals-heading" className="text-xl font-semibold text-gray-900">
-              Pending Approvals
-            </h2>
-            <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-              {pendingApprovals} pending
-            </span>
-          </div>
-          <div className="space-y-4">
-            {[1, 2, 3].map((item) => (
-              <ApprovalItem
-                key={`approval-${item}`}
-                id={item}
-                onApprove={handleApprove}
-                onReject={handleReject}
-              />
-            ))}
-            {pendingApprovals === 0 && (
-              <p className="text-center text-gray-500 py-4">No pending approvals</p>
-            )}
-          </div>
-        </section>
-
-        {/* Manager Actions */}
-        <section className="bg-white rounded-lg shadow-sm border p-6" aria-labelledby="manager-actions-heading">
-          <h2 id="manager-actions-heading" className="text-xl font-semibold text-gray-900 mb-4">
-            Manager Actions
-          </h2>
-          <div className="space-y-3">
-            {managerActions.map((action, index) => (
-              <ManagerAction
-                key={`action-${index}`}
-                icon={action.icon}
-                label={action.label}
-                onClick={action.onClick}
-              />
-            ))}
-          </div>
-        </section>
       </div>
 
-      {/* Recent Reports */}
-      <section className="bg-white rounded-lg shadow-sm border p-6" aria-labelledby="recent-reports-heading">
-        <h2 id="recent-reports-heading" className="text-xl font-semibold text-gray-900 mb-4">
-          Recent Reports
-        </h2>
-        <div className="space-y-4">
-          {[1, 2, 3].map((item) => (
-            <ReportItem key={`report-${item}`} id={item} />
-          ))}
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
+        {stats.map((stat) => (
+          <div key={stat.label} className="bg-white rounded-2xl border p-5 flex items-center gap-4 hover:shadow-md transition-all duration-200 animate-fadeUp">
+            <div className={`w-12 h-12 ${stat.bg} rounded-xl flex items-center justify-center`}>
+              <stat.icon size={22} className={stat.text} />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{stat.label}</p>
+              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Recent Platform Uploads */}
+      <div className="bg-white rounded-2xl shadow-sm border p-6">
+        <div className="flex justify-between items-center mb-5">
+          <h2 className="text-lg font-bold text-gray-900">Latest Platform Uploads</h2>
+          <Link to="/" className="text-purple-600 hover:text-purple-700 text-sm font-medium transition-colors flex items-center gap-1">
+            <Eye size={14} />
+            View All →
+          </Link>
         </div>
-      </section>
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader size="medium" text="Loading posts..." />
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="text-center py-14 bg-gray-50 rounded-xl">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Image size={28} className="text-gray-300" />
+            </div>
+            <p className="text-gray-500 font-medium mb-1">No posts yet</p>
+            <p className="text-gray-400 text-sm mb-5">Be the first to upload a photo!</p>
+            <Link
+              to="/post/create"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all duration-200 text-sm font-medium"
+            >
+              <Upload size={16} />
+              Upload Photo
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {posts.slice(0, 6).map((post) => (
+              <div key={post._id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 group">
+                <div className="aspect-video bg-gray-100 overflow-hidden relative">
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  {/* Price badge */}
+                  <div className="absolute top-2 right-2">
+                    {post.price === 0 ? (
+                      <span className="bg-green-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-sm">Free</span>
+                    ) : (
+                      <span className="bg-indigo-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-sm">₹{post.price}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="p-4">
+                  <h3 className="text-sm font-bold text-gray-900 truncate">{post.title}</h3>
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-[8px] font-bold">
+                        {post.author?.name?.charAt(0) || '?'}
+                      </div>
+                      <span className="text-xs text-gray-500">{post.author?.name || 'Unknown'}</span>
+                    </div>
+                    {post.category && (
+                      <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{post.category}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

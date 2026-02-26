@@ -29,7 +29,8 @@ const formatUserResponse = (user) => ({
 
 export const Signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, password } = req.body;
+    const email = req.body.email?.toLowerCase().trim();
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, msg: "All fields are required" });
     }
@@ -59,7 +60,8 @@ export const Signup = async (req, res) => {
 
 export const Login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = req.body.email?.toLowerCase().trim();
     if (!email || !password) {
       return res.status(400).json({ success: false, msg: "Email and password are required" });
     }
@@ -67,6 +69,11 @@ export const Login = async (req, res) => {
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
       return res.status(400).json({ success: false, msg: "Invalid credentials" });
+    }
+
+    // BUG 4 FIX: Block suspended users from logging in
+    if (user.suspended) {
+      return res.status(403).json({ success: false, msg: "Your account has been suspended. Please contact support." });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);

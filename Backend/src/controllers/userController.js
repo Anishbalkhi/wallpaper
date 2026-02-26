@@ -1,6 +1,35 @@
 import User from "../models/User.model.js";
 import Post from "../models/Post.model.js";
 
+// BUG 3 FIX: Persist profile changes to DB
+export const updateMyProfile = async (req, res) => {
+  try {
+    const { name, bio, location, phone, website, instagram, twitter } = req.body;
+    const updates = {};
+    if (name !== undefined) updates.name = name.trim();
+    if (bio !== undefined) updates.bio = bio;
+    if (location !== undefined) updates.location = location.trim();
+    if (phone !== undefined) updates.phone = phone.trim();
+    if (website !== undefined) updates.website = website.trim();
+    if (instagram !== undefined) updates.instagram = instagram.trim();
+    if (twitter !== undefined) updates.twitter = twitter.trim();
+
+    if (updates.name && updates.name.length < 3) {
+      return res.status(400).json({ success: false, msg: "Name must be at least 3 characters" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: updates },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    res.status(200).json({ success: true, msg: "Profile updated", user: updatedUser });
+  } catch (err) {
+    res.status(500).json({ success: false, msg: "Failed to update profile", error: err.message });
+  }
+};
+
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password");

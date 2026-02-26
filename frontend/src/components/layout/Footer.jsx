@@ -19,17 +19,17 @@ const Footer = () => {
         </div>
 
         <div>
-          <h4 className="font-semibold mb-3">Product</h4>
+          <h4 className="font-semibold mb-3">Navigate</h4>
           <ul className="space-y-2 text-gray-600">
-            <li><Link to="/">Home</Link></li>
-            <li><Link to="/dashboard">Dashboard</Link></li>
-            <li>Explore</li>
+            <li><Link to="/" className="hover:text-gray-900 transition-colors">Home</Link></li>
+            <li><Link to="/dashboard" className="hover:text-gray-900 transition-colors">Dashboard</Link></li>
+            <li><Link to="/" className="hover:text-gray-900 transition-colors">Explore</Link></li>
           </ul>
         </div>
 
         <div>
           <h4 className="font-semibold mb-3">Legal</h4>
-          <ul className="space-y-2 text-gray-600">
+          <ul className="space-y-2 text-gray-500 text-sm">
             <li>Privacy Policy</li>
             <li>Terms of Service</li>
           </ul>

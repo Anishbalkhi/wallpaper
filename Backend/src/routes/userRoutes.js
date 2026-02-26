@@ -3,6 +3,7 @@ import { verifyToken } from "../middleware/authMiddleware.js";
 import { checkPermission } from "../middleware/permissionMiddleware.js";
 import { 
   getMyProfile,
+  updateMyProfile,
   updateUserRole,
   getAllUsers,
   updateUserStatus,
@@ -15,6 +16,7 @@ import upload from "../config/multer.js";
 const router = express.Router();
 
 router.get("/me", verifyToken, getMyProfile);
+router.put("/me", verifyToken, updateMyProfile);
 
 router.post("/upload-profile-pic", verifyToken, upload.single("file"), uploadProfilePic);
 

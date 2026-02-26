@@ -40,9 +40,9 @@ const Dashboard = () => {
   };
 
   return (
-   <div className="card p-6">
+    <>
       {renderDashboard()}
-    </div>
+    </>
   );
 };
 

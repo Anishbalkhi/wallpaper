@@ -1,49 +1,77 @@
 @import "tailwindcss";
 
+/* ================= BASE ================= */
 html,
 body {
   background-color: #f7f8fa;
   color: #111827;
-  font-family: Inter, system-ui, sans-serif;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  scroll-behavior: smooth;
 }
 
 * {
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* ================= SMOOTH SCROLLBAR ================= */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
 
-/* Links */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ================= LINKS ================= */
 .nav-link {
   @apply text-gray-600 hover:text-gray-900 text-sm font-medium transition;
 }
 
-/* Buttons */
+/* ================= BUTTONS ================= */
 .btn-primary {
-  @apply bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition shadow-sm;
+  @apply bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98];
 }
 
 .btn-secondary {
-  @apply bg-white text-gray-700 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 hover:bg-gray-100 transition;
+  @apply bg-white text-gray-700 px-4 py-2 rounded-lg text-sm font-medium border border-gray-300 hover:bg-gray-100 transition-all duration-200 active:scale-[0.98];
 }
 
-/* Inputs */
+/* ================= INPUTS ================= */
 .input-field {
-  @apply w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-sm;
+  @apply w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-sm transition-all duration-200;
 }
 
-/* Cards */
+/* ================= CARDS ================= */
 .card {
   @apply bg-white/80 backdrop-blur rounded-xl border border-gray-200 shadow-sm;
 }
 
-/* Section spacing */
+/* ================= SECTION ================= */
 .section {
   @apply max-w-7xl mx-auto px-4;
 }
 
-
 /* ================= PINTEREST GRID ================= */
-
 .pinterest-grid {
   column-count: 2;
   column-gap: 1.25rem;
@@ -68,7 +96,6 @@ body {
 }
 
 /* ================= PIN CARD ================= */
-
 .pin-card {
   break-inside: avoid;
   margin-bottom: 1.25rem;
@@ -78,7 +105,7 @@ body {
   position: relative;
   cursor: zoom-in;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.3s cubic-bezier(.4, 0, .2, 1), box-shadow 0.3s cubic-bezier(.4, 0, .2, 1);
 }
 
 .pin-card:hover {
@@ -86,14 +113,12 @@ body {
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
 }
 
-/* Image */
 .pin-image {
   width: 100%;
   height: auto;
   display: block;
 }
 
-/* Overlay */
 .pin-overlay {
   position: absolute;
   inset: 0;
@@ -106,7 +131,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.3s ease;
 }
 
 .pin-card:hover .pin-overlay {
@@ -126,7 +151,6 @@ body {
   margin-top: 2px;
 }
 
-/* Price Badge */
 .pin-badge {
   font-size: 0.75rem;
   padding: 4px 10px;
@@ -144,7 +168,7 @@ body {
   color: white;
 }
 
-
+/* ================= ANIMATIONS ================= */
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -175,4 +199,72 @@ body {
 
 .animate-scaleIn {
   animation: scaleIn 0.15s ease-out;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeUp {
+  animation: fadeUp 0.4s cubic-bezier(.4, 0, .2, 1) both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Stagger children */
+.stagger-children>*:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.stagger-children>*:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.stagger-children>*:nth-child(3) {
+  animation-delay: 120ms;
+}
+
+.stagger-children>*:nth-child(4) {
+  animation-delay: 180ms;
+}
+
+.stagger-children>*:nth-child(5) {
+  animation-delay: 240ms;
+}
+
+.stagger-children>*:nth-child(6) {
+  animation-delay: 300ms;
+}
+
+/* ================= SELECTION ================= */
+::selection {
+  background-color: #818cf8;
+  color: white;
+}
+
+/* ================= FOCUS VISIBLE ================= */
+:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+  border-radius: 4px;
 }

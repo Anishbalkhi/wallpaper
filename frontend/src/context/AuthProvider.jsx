@@ -1,5 +1,6 @@
 // src/context/AuthProvider.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "../services/api";
 import { AuthContext } from "./AuthContext";
 
@@ -7,9 +8,10 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);       // actual current user object (from /users/me)
   const [loading, setLoading] = useState(true); // loading while checking session
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   // load user from server using httpOnly cookie (no token in localStorage)
-  const loadUser = async () => {
+  const loadUser = useCallback(async () => {
     try {
       setLoading(true);
       const res = await axios.get("/users/me");
@@ -23,16 +25,29 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadUser();
-  }, []);
+  }, [loadUser]);
 
+  // BUG 1 FIX: Listen for 401 events from api.js interceptor and use
+  // React Router navigate() for a graceful redirect (no full page reload).
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setUser(null);
+      navigate("/login", { replace: true });
+    };
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("auth:unauthorized", handleUnauthorized);
+  }, [navigate]);
+
+  // BUG 2 FIX: Removed redundant setLoading(true/false) from login()/signup().
+  // loadUser() already manages loading state, so the outer loading calls
+  // caused a double-flip and extra re-renders.
   const login = async (email, password) => {
     try {
       setError("");
-      setLoading(true);
       const res = await axios.post("/auth/login", { email, password });
       if (res.data?.success) {
         // server set httpOnly cookie — now fetch user
@@ -47,15 +62,12 @@ export const AuthProvider = ({ children }) => {
       const msg = err.response?.data?.msg || err.message || "Login failed";
       setError(msg);
       return { success: false, error: msg };
-    } finally {
-      setLoading(false);
     }
   };
 
   const signup = async (userData) => {
     try {
       setError("");
-      setLoading(true);
       const res = await axios.post("/auth/signup", userData);
       if (res.data?.success) {
         await loadUser();
@@ -69,8 +81,6 @@ export const AuthProvider = ({ children }) => {
       const msg = err.response?.data?.msg || err.message || "Signup failed";
       setError(msg);
       return { success: false, error: msg };
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -109,12 +119,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // client-only profile update (you may call backend here in future)
+  // BUG 3 FIX: updateProfile now calls the backend so changes survive refresh.
   const updateProfile = async (profileData) => {
-    // optionally send to backend (not implemented here)
-    const updated = { ...user, ...profileData };
-    setUser(updated);
-    return { success: true, user: updated };
+    try {
+      setLoading(true);
+      const res = await axios.put("/users/me", profileData);
+      if (res.data?.success) {
+        setUser(res.data.user);
+        return { success: true, user: res.data.user };
+      }
+      return { success: false, error: res.data?.msg || "Update failed" };
+    } catch (err) {
+      const msg = err.response?.data?.msg || "Update failed";
+      return { success: false, error: msg };
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateUserRole = async (userId, newRole) => {
@@ -151,7 +171,9 @@ export const AuthProvider = ({ children }) => {
     updateUserRole,
     clearError,
     isAuthenticated: !!user,
+    refreshUser: loadUser,
   };
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };
+
